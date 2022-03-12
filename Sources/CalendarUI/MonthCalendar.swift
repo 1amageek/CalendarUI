@@ -102,9 +102,11 @@ struct MonthCalendar_Previews: PreviewProvider {
             Text(dateFormatter.string(from: date))
                 .font(.body)
                 .bold()
+                .frame(height: 55)
         } header: { index in
             Text(calendar.veryShortWeekdaySymbols[index])
                 .font(.body)
         }
+        .padding()
     }
 }
