@@ -37,7 +37,7 @@ extension WeekCalendar: View where Content: View, Header: View, Ruler: View {
         let startWeekOfMonth = calendar.date(byAdding: .weekOfMonth, value: weekOfMonth, to: startDayOfMonth)!
         let startWeekOfYear = calendar.dateComponents([.calendar, .timeZone, .yearForWeekOfYear, .weekOfYear], from: startWeekOfMonth).date!
         self.startWeekOfYear = startWeekOfYear
-        self.columns = [GridItem(.flexible(minimum: 24, maximum: .infinity), spacing: 0, alignment: .center)] + (0..<7).map({ _ in GridItem(.flexible(minimum: 44, maximum: .infinity), spacing: 0, alignment: .center) })
+        self.columns = [GridItem(.flexible(minimum: 24, maximum: 120), spacing: 0, alignment: .center)] + (0..<7).map({ _ in GridItem(.flexible(minimum: 44, maximum: .infinity), spacing: 0, alignment: .center) })
         self.content = content
         self.header = header
         self.ruler = ruler
@@ -193,5 +193,6 @@ struct WeekCalendar_Previews: PreviewProvider {
             }
             .frame(height: 100)
         }
+        .previewInterfaceOrientation(.landscapeLeft)
     }
 }
