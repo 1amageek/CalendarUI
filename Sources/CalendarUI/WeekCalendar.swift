@@ -56,24 +56,22 @@ extension WeekCalendar: View where Content: View, Header: View, Ruler: View {
                     }
                 }
             }
-            GeometryReader { proxy in
-                ScrollView {
-                    LazyVGrid(columns: columns, alignment: .center, spacing: 0) {
-                        ForEach(0..<24) { hour in
-                            ForEach(0..<8) { index in
-                                if index == 0 {
-                                    ruler(hour)
-                                } else {
-                                    let day = index - 1
-                                    let date = calendar.date(byAdding: .day, value: day, to: startWeekOfYear)!
-                                    let time = calendar.date(byAdding: .hour, value: hour, to: date)!
-                                    content(time)
-                                }
+            ScrollView {
+                LazyVGrid(columns: columns, alignment: .center, spacing: 0) {
+                    ForEach(0..<24) { hour in
+                        ForEach(0..<8) { index in
+                            if index == 0 {
+                                ruler(hour)
+                            } else {
+                                let day = index - 1
+                                let date = calendar.date(byAdding: .day, value: day, to: startWeekOfYear)!
+                                let time = calendar.date(byAdding: .hour, value: hour, to: date)!
+                                content(time)
                             }
                         }
                     }
-                    .offset(y: 22)
                 }
+                .offset(y: 22)
             }
         }
     }
