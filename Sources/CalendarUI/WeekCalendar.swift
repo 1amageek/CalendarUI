@@ -34,7 +34,7 @@ public struct WeekCalendar<Content, Header, Ruler> {
 }
 
 extension WeekCalendar.Interval {
-    
+
     var countOfSection: Int {
         switch self {
             case .hour(let int):
@@ -90,35 +90,37 @@ extension WeekCalendar: View where Content: View, Header: View, Ruler: View {
     }
 
     public var body: some View {
-        VStack(spacing: 0) {
-            LazyVGrid(columns: columns, alignment: .center, spacing: 0) {
-                ForEach(0..<8) { index in
-                    if index == 0 {
-                        Spacer()
-                    } else {
-                        let day = index - 1
-                        let date = calendar.date(byAdding: .day, value: day, to: startWeekOfYear)!
-                        header(date)
-                    }
-                }
-            }
-            ScrollView {
+        GeometryReader { _ in
+            VStack(spacing: 0) {
                 LazyVGrid(columns: columns, alignment: .center, spacing: 0) {
-                    ForEach(rangeOfSection, id: \.self) { section in
-                        let (hour, minute, second) = interval.time(at: section)
-                        ForEach(0..<8) { index in
-                            if index == 0 {
-                                ruler(hour, minute, second)
-                            } else {
-                                let day = index - 1
-                                let date = calendar.date(byAdding: .day, value: day, to: startWeekOfYear)!
-                                let time = calendar.date(bySettingHour: hour, minute: minute, second: second, of: date)!
-                                content(time)
-                            }
+                    ForEach(0..<8) { index in
+                        if index == 0 {
+                            Spacer()
+                        } else {
+                            let day = index - 1
+                            let date = calendar.date(byAdding: .day, value: day, to: startWeekOfYear)!
+                            header(date)
                         }
                     }
                 }
-                .offset(y: 22)
+                ScrollView {
+                    LazyVGrid(columns: columns, alignment: .center, spacing: 0) {
+                        ForEach(rangeOfSection, id: \.self) { section in
+                            let (hour, minute, second) = interval.time(at: section)
+                            ForEach(0..<8) { index in
+                                if index == 0 {
+                                    ruler(hour, minute, second)
+                                } else {
+                                    let day = index - 1
+                                    let date = calendar.date(byAdding: .day, value: day, to: startWeekOfYear)!
+                                    let time = calendar.date(bySettingHour: hour, minute: minute, second: second, of: date)!
+                                    content(time)
+                                }
+                            }
+                        }
+                    }
+                    .offset(y: 22)
+                }
             }
         }
     }
@@ -148,21 +150,23 @@ extension WeekCalendar where Content: View, Header: View, Ruler == EmptyView {
     }
 
     public var body: some View {
-        VStack(spacing: 0) {
-            LazyVGrid(columns: columns, alignment: .center, spacing: 0) {
-                ForEach(0..<7) { day in
-                    let date = calendar.date(byAdding: .day, value: day, to: startWeekOfYear)!
-                    header(date)
-                }
-            }
-            ScrollView {
+        GeometryReader { _ in
+            VStack(spacing: 0) {
                 LazyVGrid(columns: columns, alignment: .center, spacing: 0) {
-                    ForEach(rangeOfSection, id: \.self) { section in
-                        let (hour, minute, second) = interval.time(at: section)
-                        ForEach(0..<7) { day in
-                            let date = calendar.date(byAdding: .day, value: day, to: startWeekOfYear)!
-                            let time = calendar.date(bySettingHour: hour, minute: minute, second: second, of: date)!
-                            content(time)
+                    ForEach(0..<7) { day in
+                        let date = calendar.date(byAdding: .day, value: day, to: startWeekOfYear)!
+                        header(date)
+                    }
+                }
+                ScrollView {
+                    LazyVGrid(columns: columns, alignment: .center, spacing: 0) {
+                        ForEach(rangeOfSection, id: \.self) { section in
+                            let (hour, minute, second) = interval.time(at: section)
+                            ForEach(0..<7) { day in
+                                let date = calendar.date(byAdding: .day, value: day, to: startWeekOfYear)!
+                                let time = calendar.date(bySettingHour: hour, minute: minute, second: second, of: date)!
+                                content(time)
+                            }
                         }
                     }
                 }
@@ -194,14 +198,16 @@ extension WeekCalendar where Content: View, Header == EmptyView, Ruler == EmptyV
     }
 
     public var body: some View {
-        ScrollView {
-            LazyVGrid(columns: columns, alignment: .center, spacing: 0) {
-                ForEach(rangeOfSection, id: \.self) { section in
-                    let (hour, minute, second) = interval.time(at: section)
-                    ForEach(0..<7) { day in
-                        let date = calendar.date(byAdding: .day, value: day, to: startWeekOfYear)!
-                        let time = calendar.date(bySettingHour: hour, minute: minute, second: second, of: date)!
-                        content(time)
+        GeometryReader { _ in
+            ScrollView {
+                LazyVGrid(columns: columns, alignment: .center, spacing: 0) {
+                    ForEach(rangeOfSection, id: \.self) { section in
+                        let (hour, minute, second) = interval.time(at: section)
+                        ForEach(0..<7) { day in
+                            let date = calendar.date(byAdding: .day, value: day, to: startWeekOfYear)!
+                            let time = calendar.date(bySettingHour: hour, minute: minute, second: second, of: date)!
+                            content(time)
+                        }
                     }
                 }
             }
