@@ -119,7 +119,6 @@ extension WeekCalendar: View where Content: View, Header: View, Ruler: View {
                             }
                         }
                     }
-                    .offset(y: 22)
                 }
             }
         }
