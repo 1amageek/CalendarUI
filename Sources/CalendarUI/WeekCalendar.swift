@@ -7,33 +7,13 @@
 
 import SwiftUI
 
-public struct WeekCalendar<Content, Header, Ruler> {
-
-    public enum Interval {
-        case hour(Int)
-        case minute(Int)
-        case second(Int)
-    }
-
-    private var startWeekOfYear: Date
-
-    private var calendar: Calendar = Calendar.autoupdatingCurrent
-
-    private var columns: [GridItem]
-
-    private var rangeOfSection: Range<Int>
-
-    public var interval: Interval
-
-    public var content: (Date) -> Content
-
-    public var header: (Date) -> Header
-
-    public var ruler: (Int, Int, Int) -> Ruler
-
+public enum Interval {
+    case hour(Int)
+    case minute(Int)
+    case second(Int)
 }
 
-extension WeekCalendar.Interval {
+extension Interval {
 
     var countOfSection: Int {
         switch self {
@@ -63,6 +43,26 @@ extension WeekCalendar.Interval {
                 return (hour, minute, second)
         }
     }
+}
+
+public struct WeekCalendar<Content, Header, Ruler> {
+
+    private var startWeekOfYear: Date
+
+    private var calendar: Calendar = Calendar.autoupdatingCurrent
+
+    private var columns: [GridItem]
+
+    private var rangeOfSection: Range<Int>
+
+    public var interval: Interval
+
+    public var content: (Date) -> Content
+
+    public var header: (Date) -> Header
+
+    public var ruler: (Int, Int, Int) -> Ruler
+
 }
 
 extension WeekCalendar: View where Content: View, Header: View, Ruler: View {
