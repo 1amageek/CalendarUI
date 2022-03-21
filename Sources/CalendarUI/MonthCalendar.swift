@@ -24,6 +24,28 @@ public struct MonthCalendar<Content, Header> {
     public var header: (Int) -> Header
 }
 
+struct _MonthCalendar<Content>: View where Content: View {
+
+    var startWeekOfYear: Date
+    var calendar: Calendar
+    var days: Range<Int>
+    var columns: [GridItem]
+    var content: (Date) -> Content
+
+    var body: some View {
+        GeometryReader { proxy in
+            let height: CGFloat = proxy.size.height / CGFloat(days.count / 7)
+            LazyVGrid(columns: columns, alignment: .center, spacing: 0) {
+                ForEach(days, id: \.self) { day in
+                    let date = calendar.date(byAdding: .day, value: day, to: startWeekOfYear)!
+                    content(date)
+                        .frame(height: height)
+                }
+            }
+        }
+    }
+}
+
 extension MonthCalendar: View where Content: View, Header: View {
 
     public init(
@@ -50,12 +72,10 @@ extension MonthCalendar: View where Content: View, Header: View {
                     header(index)
                 }
             }
-            LazyVGrid(columns: columns, alignment: .center, spacing: 0) {
-                ForEach(days) { day in
-                    let date = calendar.date(byAdding: .day, value: day, to: startWeekOfYear)!
-                    content(date)
-                }
-            }
+            _MonthCalendar(startWeekOfYear: startWeekOfYear,
+                           calendar: calendar,
+                           days: days, columns: columns,
+                           content: content)
         }
     }
 }
@@ -79,12 +99,10 @@ extension MonthCalendar where Content: View, Header == EmptyView {
     }
 
     public var body: some View {
-        LazyVGrid(columns: columns, alignment: .center, spacing: 0) {
-            ForEach(days) { day in
-                let date = calendar.date(byAdding: .day, value: day, to: startWeekOfYear)!
-                content(date)
-            }
-        }
+        _MonthCalendar(startWeekOfYear: startWeekOfYear,
+                       calendar: calendar,
+                       days: days, columns: columns,
+                       content: content)
     }
 }
 
@@ -99,10 +117,12 @@ struct MonthCalendar_Previews: PreviewProvider {
     static var previews: some View {
         let calendar = Calendar(identifier: .gregorian)
         MonthCalendar(year: 2022, month: 3) { date in
-            Text(dateFormatter.string(from: date))
-                .font(.body)
-                .bold()
-                .frame(height: 55)
+            VStack {
+                Text(dateFormatter.string(from: date))
+                    .font(.body)
+                    .bold()
+                Spacer()
+            }
         } header: { index in
             Text(calendar.veryShortWeekdaySymbols[index])
                 .font(.body)
