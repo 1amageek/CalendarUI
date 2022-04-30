@@ -15,6 +15,22 @@ public enum Interval {
 
 extension Interval {
 
+    public var value: Int {
+        switch self {
+            case .hour(let value): return value
+            case .minute(let value): return value
+            case .second(let value): return value
+        }
+    }
+
+    public var component: Calendar.Component {
+        switch self {
+            case .hour(_): return .hour
+            case .minute(_): return .minute
+            case .second(_): return .second
+        }
+    }
+
     var countOfSection: Int {
         switch self {
             case .hour(let int):
@@ -224,7 +240,7 @@ struct WeekCalendar_Previews: PreviewProvider {
 
     static var previews: some View {
         let calendar = Calendar(identifier: .gregorian)
-        WeekCalendar(year: 2022, month: 3,weekOfMonth: 2, interval: .hour(4)) { date in
+        WeekCalendar(year: 2022, month: 3, weekOfMonth: 2, interval: .hour(4)) { date in
             VStack {
                 Divider()
                 Text(dateFormatter.string(from: date))
