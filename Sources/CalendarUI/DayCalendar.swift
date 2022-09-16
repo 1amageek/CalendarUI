@@ -53,13 +53,13 @@ extension DayCalendar: View where Content: View, Header: View, Data.Element: Per
         TabView(selection: $selection) {
             ForEach(-99..<99) { index in
                 let date = calendar.date(byAdding: .day, value: index, to: startOfToday)!
-                let filteredData = data.filter { item in
-                    let startDateIsSameDay = calendar.isDate(item.startDate, inSameDayAs: date)
-                    let endDateIsSameDay = calendar.isDate(item.endDate, inSameDayAs: date)
-                    let isInThePeiod = item.startDate <= date && date < item.endDate
-                    return startDateIsSameDay || endDateIsSameDay || isInThePeiod
-                }
-                TimeCalendar(date, data: filteredData, id: id, content: content)
+//                let filteredData = data.filter { item in
+//                    let startDateIsSameDay = calendar.isDate(item.startDate, inSameDayAs: date)
+//                    let endDateIsSameDay = calendar.isDate(item.endDate, inSameDayAs: date)
+//                    let isInThePeiod = item.startDate <= date && date < item.endDate
+//                    return startDateIsSameDay || endDateIsSameDay || isInThePeiod
+//                }
+                TimeCalendar(date, data: data, id: id, content: content)
                     .tag(date)
             }
         }
@@ -132,21 +132,19 @@ struct DayCalendar_Previews: PreviewProvider {
         
         @State var selection: Date = Date()
         
-        var body: some View {
-            DayCalendar($selection, data: [
-                Item(
-                    startDate: DateComponents(calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, year: 2022, month: 9, day: 11, hour: 3).date!,
-                    endDate: DateComponents(calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, year: 2022, month: 9, day: 11, hour: 5).date!
-                ),
-                Item(
-                    startDate: DateComponents(calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, year: 2022, month: 9, day: 12, hour: 3).date!,
-                    endDate: DateComponents(calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, year: 2022, month: 9, day: 13, hour: 5).date!
-                ),
-                Item(
-                    startDate: DateComponents(calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, year: 2022, month: 9, day: 14, hour: 3).date!,
-                    endDate: DateComponents(calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, year: 2022, month: 9, day: 15, hour: 5).date!
+        func items() -> [Item] {
+            (0..<1000).map { index in
+                let minutes = 15 * index
+                return Item(
+                    startDate: DateComponents(calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, year: 2022, month: 9, day: 11, hour: 0, minute: minutes).date!,
+                    endDate: DateComponents(calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, year: 2022, month: 9, day: 11, hour: 0, minute: 15 * (index + 1)).date!
                 )
-            ], id: \.self) { element in
+            }
+        }
+        
+        var body: some View {
+            let items = items()
+            DayCalendar($selection, data: items, id: \.self) { element in
                 Color.blue
                     .cornerRadius(4)
             } header: { date in

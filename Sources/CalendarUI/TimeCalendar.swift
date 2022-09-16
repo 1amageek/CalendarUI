@@ -74,6 +74,9 @@ extension TimeCalendar: View where Content: View, Data.Element: PeriodRepresenta
             .updating($magnifyBy) { currentState, gestureState, transaction in
                 gestureState = currentState
             }
+            .onEnded { value in
+                
+            }
     }
     
     public var body: some View {
@@ -109,7 +112,7 @@ extension TimeCalendar: View where Content: View, Data.Element: PeriodRepresenta
                                 .id("current")
                         }
                     }
-                   
+                    
                 }
                 .onAppear { scroll.scrollTo("current") }
             }
@@ -125,20 +128,33 @@ struct TimeCalendar_Previews: PreviewProvider {
     }
     
     struct ContentView: View {
+        
+        func items() -> [Item] {
+            (0..<1000).map { index in
+                let minutes = 15 * index
+                return Item(
+                    startDate: DateComponents(calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, year: 2022, month: 9, day: 11, hour: 0, minute: minutes).date!,
+                    endDate: DateComponents(calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, year: 2022, month: 9, day: 11, hour: 0, minute: 15 * (index + 1)).date!
+                )
+            }
+        }
+        
         var body: some View {
             TabView {
                 TimeCalendar(
                     DateComponents(calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, year: 2022, month: 9, day: 13).date!,
-                    data: [
-                        Item(
-                            startDate: DateComponents(calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, year: 2022, month: 9, day: 13, hour: 0).date!,
-                            endDate: DateComponents(calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, year: 2022, month: 9, day: 13, hour: 5).date!
-                        ),
-                        Item(
-                            startDate: DateComponents(calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, year: 2022, month: 9, day: 13, hour: 6).date!,
-                            endDate: DateComponents(calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, year: 2022, month: 9, day: 13, hour: 7).date!
-                        )
-                    ], id: \.self) { element in
+                    data: items(),
+//                        [
+//                            Item(
+//                                startDate: DateComponents(calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, year: 2022, month: 9, day: 13, hour: 0).date!,
+//                                endDate: DateComponents(calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, year: 2022, month: 9, day: 13, hour: 5).date!
+//                            ),
+//                            Item(
+//                                startDate: DateComponents(calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, year: 2022, month: 9, day: 13, hour: 6).date!,
+//                                endDate: DateComponents(calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, year: 2022, month: 9, day: 13, hour: 7).date!
+//                            )
+//                        ]
+                    id: \.self) { element in
                         Color.blue
                             .cornerRadius(4)
                             .padding(.vertical, 1.5)

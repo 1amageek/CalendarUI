@@ -162,7 +162,7 @@ struct TimeLineCalendar_Previews: PreviewProvider {
                 TimeLine {
                     EqualParts(range.count) { index in
                         VStack(spacing: 0) {
-                            Color.clear
+                            Color.blue
                             Divider()
                         }
                     }
