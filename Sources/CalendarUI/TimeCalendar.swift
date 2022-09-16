@@ -17,7 +17,7 @@ public struct TimeCalendar<Data, ID, Content> where Data : RandomAccessCollectio
     
     @Environment(\.calendar) var calendar: Calendar
     
-    private var scale: CGFloat = 1000
+    private var scale: CGFloat = 4000
     
     @GestureState var magnifyBy: CGFloat = 1.0
     
@@ -159,10 +159,10 @@ struct TimeCalendar_Previews: PreviewProvider {
                             .cornerRadius(4)
                             .padding(.vertical, 1.5)
                             .padding(.horizontal, 1)
-                            .overlay {
-                                Text("\(element.startDate)")
-                                    .font(.caption)
-                            }
+//                            .overlay {
+//                                Text("\(element.startDate)")
+//                                    .font(.caption)
+//                            }
                     }
                     .safeAreaInset(edge: .top) {
                         ScrollView(.horizontal) {
