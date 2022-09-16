@@ -49,16 +49,19 @@ extension DayCalendar: View where Content: View, Header: View, Data.Element: Per
         self.header = header
     }
     
+    func fileted(date: Date) -> [Data.Element] {
+        data.filter { item in
+            let startDateIsSameDay = calendar.isDate(item.startDate, inSameDayAs: date)
+            let endDateIsSameDay = calendar.isDate(item.endDate, inSameDayAs: date)
+            let isInThePeiod = item.startDate <= date && date < item.endDate
+            return startDateIsSameDay || endDateIsSameDay || isInThePeiod
+        }
+    }
+    
     public var body: some View {
         TabView(selection: $selection) {
             ForEach(-99..<99) { index in
                 let date = calendar.date(byAdding: .day, value: index, to: startOfToday)!
-//                let filteredData = data.filter { item in
-//                    let startDateIsSameDay = calendar.isDate(item.startDate, inSameDayAs: date)
-//                    let endDateIsSameDay = calendar.isDate(item.endDate, inSameDayAs: date)
-//                    let isInThePeiod = item.startDate <= date && date < item.endDate
-//                    return startDateIsSameDay || endDateIsSameDay || isInThePeiod
-//                }
                 TimeCalendar(date, data: data, id: id, content: content)
                     .tag(date)
             }
@@ -106,11 +109,14 @@ extension DayCalendar: View where Content: View, Header: View, Data.Element: Per
                 weekOfYear = calendar.dateComponents([.calendar, .timeZone, .yearForWeekOfYear, .weekOfYear], from: newValue).date!
             }
         }
-        .onChange(of: weekOfYear) { [value = weekOfYear] newValue in
-            if value < newValue {
-                selection = calendar.date(byAdding: .weekOfYear, value: 1, to: selection)!
-            } else {
-                selection = calendar.date(byAdding: .weekOfYear, value: -1, to: selection)!
+        .onChange(of: weekOfYear) { [oldValue = weekOfYear] newValue in
+            let weekOfYear = calendar.dateComponents([.calendar, .timeZone, .yearForWeekOfYear, .weekOfYear], from: selection).date!
+            if weekOfYear != newValue {
+                if oldValue < newValue {
+                    selection = calendar.date(byAdding: .weekOfYear, value: 1, to: selection)!
+                } else {
+                    selection = calendar.date(byAdding: .weekOfYear, value: -1, to: selection)!
+                }
             }
         }
     }
@@ -133,13 +139,14 @@ struct DayCalendar_Previews: PreviewProvider {
         @State var selection: Date = Date()
         
         func items() -> [Item] {
-            (0..<1000).map { index in
-                let minutes = 15 * index
-                return Item(
-                    startDate: DateComponents(calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, year: 2022, month: 9, day: 11, hour: 0, minute: minutes).date!,
-                    endDate: DateComponents(calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, year: 2022, month: 9, day: 11, hour: 0, minute: 15 * (index + 1)).date!
-                )
-            }
+//            (0..<100).map { index in
+//                let minutes = 15 * index
+//                return Item(
+//                    startDate: DateComponents(calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, year: 2022, month: 9, day: 11, hour: 0, minute: minutes).date!,
+//                    endDate: DateComponents(calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, year: 2022, month: 9, day: 11, hour: 0, minute: 15 * (index + 1)).date!
+//                )
+//            }
+            return []
         }
         
         var body: some View {
@@ -147,6 +154,7 @@ struct DayCalendar_Previews: PreviewProvider {
             DayCalendar($selection, data: items, id: \.self) { element in
                 Color.blue
                     .cornerRadius(4)
+                    .padding(1.5)
             } header: { date in
                 let isToday = calendar.isDateInToday(selection)
                 let isSelected = calendar.isDate(selection, inSameDayAs: date)

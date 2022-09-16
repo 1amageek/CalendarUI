@@ -89,13 +89,17 @@ extension TimeCalendar: View where Content: View, Data.Element: PeriodRepresenta
                     let height = proxy.size.height + scale * magnifyBy
                     let size = CGSize(width: width, height: height)
                     GeometryReader { _ in
-                        ForEach(data, id: id) { element in
-                            let startDate = max(element.startDate, beginningOfDay)
-                            let endDate = min(element.endDate, endOfDay)
-                            let frame = getFrame(size: size, start: startDate, end: endDate)
-                            content(element)
-                                .position(x: frame.origin.x, y: frame.origin.y)
-                                .frame(width: frame.size.width, height: frame.size.height)
+                        if data.isEmpty {
+                            EmptyView()
+                        } else {
+                            ForEach(data, id: id) { element in
+                                let startDate = max(element.startDate, beginningOfDay)
+                                let endDate = min(element.endDate, endOfDay)
+                                let frame = getFrame(size: size, start: startDate, end: endDate)
+                                content(element)
+                                    .position(x: frame.origin.x, y: frame.origin.y)
+                                    .frame(width: frame.size.width, height: frame.size.height)
+                            }
                         }
                     }
                     .frame(width: width, height: height)
@@ -130,7 +134,7 @@ struct TimeCalendar_Previews: PreviewProvider {
     struct ContentView: View {
         
         func items() -> [Item] {
-            (0..<1000).map { index in
+            (0..<40).map { index in
                 let minutes = 15 * index
                 return Item(
                     startDate: DateComponents(calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, year: 2022, month: 9, day: 11, hour: 0, minute: minutes).date!,
@@ -142,27 +146,17 @@ struct TimeCalendar_Previews: PreviewProvider {
         var body: some View {
             TabView {
                 TimeCalendar(
-                    DateComponents(calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, year: 2022, month: 9, day: 13).date!,
+                    DateComponents(calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, year: 2022, month: 9, day: 11).date!,
                     data: items(),
-//                        [
-//                            Item(
-//                                startDate: DateComponents(calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, year: 2022, month: 9, day: 13, hour: 0).date!,
-//                                endDate: DateComponents(calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, year: 2022, month: 9, day: 13, hour: 5).date!
-//                            ),
-//                            Item(
-//                                startDate: DateComponents(calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, year: 2022, month: 9, day: 13, hour: 6).date!,
-//                                endDate: DateComponents(calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, year: 2022, month: 9, day: 13, hour: 7).date!
-//                            )
-//                        ]
                     id: \.self) { element in
                         Color.blue
                             .cornerRadius(4)
                             .padding(.vertical, 1.5)
                             .padding(.horizontal, 1)
-//                            .overlay {
-//                                Text("\(element.startDate)")
-//                                    .font(.caption)
-//                            }
+                            .overlay {
+                                Text("\(element.startDate)")
+                                    .font(.caption)
+                            }
                     }
                     .safeAreaInset(edge: .top) {
                         ScrollView(.horizontal) {
