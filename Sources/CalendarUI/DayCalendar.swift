@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import PageView
 
 public struct DayCalendar<Data, ID, Content, Header> where Data : RandomAccessCollection, ID : Hashable {
     
@@ -26,6 +27,10 @@ public struct DayCalendar<Data, ID, Content, Header> where Data : RandomAccessCo
     @Binding var selection: Date
     
     @State var weekOfYear: Date
+    
+    @State var currentDay: Date
+    
+    @State var timeCalendarAlpha: CGFloat = 1
 }
 
 extension DayCalendar: View where Content: View, Header: View, Data.Element: PeriodRepresentable {
@@ -39,6 +44,7 @@ extension DayCalendar: View where Content: View, Header: View, Data.Element: Per
         @ViewBuilder header: @escaping (Date) -> Header
     ) {
         self._selection = selection
+        self._currentDay = State(initialValue: selection.wrappedValue)
         self.startOfToday = calendar.dateComponents([.calendar, .timeZone, .year, .month, .day], from: Date()).date!
         self.startOfThisWeek = calendar.dateComponents([.calendar, .timeZone, .yearForWeekOfYear, .weekOfYear], from: Date()).date!
         let dateComponents = calendar.dateComponents([.calendar, .timeZone, .yearForWeekOfYear, .weekOfYear], from: Date())
@@ -58,12 +64,31 @@ extension DayCalendar: View where Content: View, Header: View, Data.Element: Per
         }
     }
     
+    var startOfMonth: Date {
+        calendar.date(byAdding: .day, value: -1, to: calendar.dateComponents([.calendar, .timeZone, .yearForWeekOfYear, .weekOfYear], from: weekOfYear).date!)!
+    }
+    
+    var endOfMonth: Date {
+        let date = calendar
+            .date(byAdding: .weekOfYear, value: 1, to: weekOfYear)!
+        return calendar.date(byAdding: .day, value: 2, to: date)!
+    }
+    
+    var rangeOfMonth: Array<Date> {
+        Array(stride(from: startOfMonth, through: endOfMonth, by: 60 * 60 * 24))
+    }
+    
     public var body: some View {
         TabView(selection: $selection) {
-            ForEach(-99..<99) { index in
-                let date = calendar.date(byAdding: .day, value: index, to: startOfToday)!
+            ForEach(rangeOfMonth, id: \.self) { date in
                 TimeCalendar(date, data: data, id: id, content: content)
                     .tag(date)
+            }
+            .opacity(timeCalendarAlpha)
+            .onAppear {
+                withAnimation(.easeOut(duration: 0.2)) {
+                    self.timeCalendarAlpha = 1
+                }
             }
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
@@ -91,7 +116,7 @@ extension DayCalendar: View where Content: View, Header: View, Data.Element: Per
                     }
                     .tabViewStyle(.page(indexDisplayMode: .never))
                 }
-                Text(selection, format: .dateTime.year().month().day().hour().minute())
+                Text(selection, format: .dateTime.year().month().day())
                     .font(.callout)
                     .padding(.top, 2)
                     .padding(.bottom, 8)
@@ -105,8 +130,12 @@ extension DayCalendar: View where Content: View, Header: View, Data.Element: Per
             weekOfYear = calendar.dateComponents([.calendar, .timeZone, .yearForWeekOfYear, .weekOfYear], from: selection).date!
         }
         .onChange(of: selection) { newValue in
-            withAnimation {
-                weekOfYear = calendar.dateComponents([.calendar, .timeZone, .yearForWeekOfYear, .weekOfYear], from: newValue).date!
+            let date = calendar.dateComponents([.calendar, .timeZone, .yearForWeekOfYear, .weekOfYear], from: newValue).date!
+            if weekOfYear != date {
+                self.timeCalendarAlpha = 0
+                withAnimation {
+                    weekOfYear = date
+                }
             }
         }
         .onChange(of: weekOfYear) { [oldValue = weekOfYear] newValue in
