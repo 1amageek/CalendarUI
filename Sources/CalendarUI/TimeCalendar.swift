@@ -15,54 +15,18 @@ public protocol PeriodRepresentable {
 
 public struct TimeCalendar<Data, ID, Content> where Data : RandomAccessCollection, ID : Hashable, Data.Element: PeriodRepresentable {
     
-    @MainActor
     class Model: ObservableObject {
-        
-        struct TimeStride {
-            var date: Date
-            var itemsToStart: [ID]
-            var itemsPassThrough: [ID]
-        }
-        
-        @Published var timeStrides: [TimeStride] = []
         
         var startDate: Date
         
         var endDate: Date
         
-        var data: Data
+        var strides: [Date]
         
-        var id: KeyPath<Data.Element, ID>
-        
-        init(startDate: Date, endDate: Date, data: Data, id: KeyPath<Data.Element, ID>) {
+        init(startDate: Date, endDate: Date) {
             self.startDate = startDate
             self.endDate = endDate
-            self.data = data
-            self.id = id
-        }
-        
-        func prepare() {
-            let items: [Date] = stride(from: startDate, through: endDate, by: 15 * 60).map({ $0 })
-            let length: Int = items.count - 1
-            let id = id
-            let data = data
-            Task {
-                let timeStrides = (0..<length).map { index in
-                    let start: Date = items[index]
-                    let end: Date = items[index + 1]
-                    let range: Range<Date> = start..<end
-                    let itemsToStart: [ID] = data.filter({ $0.startDate == start }).map({ $0[keyPath: id] })
-                    let itemsPassThrough: [ID] = data.filter({ ($0.startDate..<$0.endDate).intersects(range) }).map({ $0[keyPath: id] })
-                    return TimeStride(date: start, itemsToStart: itemsToStart, itemsPassThrough: itemsPassThrough)
-                }
-                Task { @MainActor in
-                    self.timeStrides = timeStrides
-                }
-            }
-        }
-        
-        func clear() {
-            self.timeStrides = []
+            self.strides = stride(from: startDate, through: endDate, by: 15 * 60).map({ $0 })
         }
     }
     
@@ -86,7 +50,7 @@ public struct TimeCalendar<Data, ID, Content> where Data : RandomAccessCollectio
     
     var id: KeyPath<Data.Element, ID>
     
-    var tagID: String
+    var tagID: Date
 }
 
 extension TimeCalendar: View where Content: View {
@@ -105,8 +69,8 @@ extension TimeCalendar: View where Content: View {
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.dateFormat = "HH:mm"
         self.formatter = formatter
-        self.tagID = formatter.string(from: calendar.nextDate(after: date, matching: DateComponents(minute: 0), matchingPolicy: .strict)!)
-        self._model = StateObject(wrappedValue: Model(startDate: startOfDay, endDate: nextDay, data: data, id: id))
+        self.tagID = calendar.nextDate(after: date, matching: DateComponents(minute: 0), matchingPolicy: .strict)!
+        self._model = StateObject(wrappedValue: Model(startDate: startOfDay, endDate: nextDay))
     }
     
     func getHeight(size: CGSize, start: Date, end: Date) -> CGFloat {
@@ -142,12 +106,11 @@ extension TimeCalendar: View where Content: View {
         let size = CGSize(width: width, height: height)
         let cellHeight = height / (60 * 60 * 24) * 15 * 60
         LazyVStack(spacing: 0) {
-            ForEach(model.timeStrides, id: \.date) { timeStride in
-                let tagID = formatter.string(from: timeStride.date)
+            ForEach(model.strides, id: \.self) { date in
                 VStack(alignment: .leading) {
                     HStack(alignment: .top, spacing: 0.5) {
-                        ForEach(timeStride.itemsToStart, id: \.self) { key in
-                            let item: Data.Element = data.first(where: { $0[keyPath: id] == key })!
+                        let items = data.filter({ $0.startDate == date })
+                        ForEach(items, id: id) { item in
                             let height = getHeight(size: size, start: item.startDate, end: item.endDate)
                             content(item)
                                 .frame(height: height)
@@ -157,12 +120,10 @@ extension TimeCalendar: View where Content: View {
                     .padding(.leading, insets.leading)
                 }
                 .frame(height: cellHeight, alignment: .top)
-                .id(tagID)
+                .id(date)
             }
         }
         .frame(width: width, height: height, alignment: .top)
-        .onAppear { model.prepare() }
-        .onDisappear { model.clear() }
     }
     
     public var body: some View {

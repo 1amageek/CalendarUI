@@ -24,7 +24,7 @@ struct ContentView: View {
     @State var selection: Date = Date()
     
     func items() -> [Item] {
-        var items = (0..<(20)).map { index in
+        var items = (0..<(2000)).map { index in
             let minutes = 15 * index
             return Item(
                 id: "\(index)",
