@@ -27,7 +27,7 @@ struct CurrentTimeHand: View {
                 path.addLines([CGPoint(x: start, y: y), CGPoint(x: end, y: y)])
             }
             context.stroke(path, with: .color(.red), lineWidth: 0.5)
-            context.fill(Path(ellipseIn: CGRect(x: insets.leading, y: y - 3, width: 6, height: 6)), with: .color(.red))
+            context.fill(Path(ellipseIn: CGRect(x: insets.leading - 2, y: y - 3, width: 6, height: 6)), with: .color(.red))
             let text = Text(text).font(.caption2).foregroundColor(.red)
             context.draw(text, at: CGPoint(x: start - 3, y: y), anchor: .trailing)
         }
