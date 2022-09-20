@@ -13,7 +13,7 @@ public protocol PeriodRepresentable {
     var endDate: Date { get }
 }
 
-public struct TimeCalendar<Data, ID, Content> where Data : RandomAccessCollection, ID : Hashable, Data.Element: PeriodRepresentable {
+public struct TimeCalendar<Data, ID, Content, Placeholder> where Data : RandomAccessCollection, ID : Hashable, Data.Element: PeriodRepresentable {
     
     class Model: ObservableObject {
         
@@ -26,7 +26,7 @@ public struct TimeCalendar<Data, ID, Content> where Data : RandomAccessCollectio
         init(startDate: Date, endDate: Date) {
             self.startDate = startDate
             self.endDate = endDate
-            self.strides = stride(from: startDate, through: endDate, by: 15 * 60).map({ $0 })
+            self.strides = stride(from: startDate, to: endDate, by: 15 * 60).map({ $0 })
         }
     }
     
@@ -34,7 +34,7 @@ public struct TimeCalendar<Data, ID, Content> where Data : RandomAccessCollectio
     
     @Environment(\.calendar) var calendar: Calendar
     
-    private var scale: CGFloat = 4000
+    private var scale: CGFloat = 3800
     
     @GestureState var magnifyBy: CGFloat = 1.0
     
@@ -46,16 +46,24 @@ public struct TimeCalendar<Data, ID, Content> where Data : RandomAccessCollectio
     
     public var data: Data
     
-    public var content: (Data.Element) -> Content
+    public var content: (Date, Data.Element) -> Content
+    
+    public var placeholder: (Date) -> Placeholder
     
     var id: KeyPath<Data.Element, ID>
     
     var tagID: Date
 }
 
-extension TimeCalendar: View where Content: View {
+extension TimeCalendar: View where Content: View, Placeholder: View {
     
-    public init(_ date: Date, data: Data, id: KeyPath<Data.Element, ID>, @ViewBuilder content: @escaping (Data.Element) -> Content) {
+    public init(
+        _ date: Date,
+        data: Data,
+        id: KeyPath<Data.Element, ID>,
+        @ViewBuilder content: @escaping (Date, Data.Element) -> Content,
+        @ViewBuilder placeholder: @escaping (Date) -> Placeholder
+    ) {
         let calendar = Calendar(identifier: .iso8601)
         let startOfDay = calendar.startOfDay(for: date)
         let nextDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
@@ -63,6 +71,7 @@ extension TimeCalendar: View where Content: View {
         self.data = data
         self.id = id
         self.content = content
+        self.placeholder = placeholder
         let formatter = DateFormatter()
         formatter.calendar = .autoupdatingCurrent
         formatter.timeZone = .autoupdatingCurrent
@@ -110,10 +119,14 @@ extension TimeCalendar: View where Content: View {
                 VStack(alignment: .leading) {
                     HStack(alignment: .top, spacing: 0.5) {
                         let items = data.filter({ $0.startDate == date })
-                        ForEach(items, id: id) { item in
-                            let height = getHeight(size: size, start: item.startDate, end: item.endDate)
-                            content(item)
-                                .frame(height: height)
+                        if items.isEmpty {
+                            placeholder(date)
+                        } else {
+                            ForEach(items, id: id) { item in
+                                let height = getHeight(size: size, start: item.startDate, end: item.endDate)
+                                content(date, item)
+                                    .frame(height: height)
+                            }
                         }
                     }
                     .frame(height: cellHeight, alignment: .top)
@@ -194,7 +207,7 @@ struct TimeCalendar_Previews: PreviewProvider {
                 TimeCalendar(
                     DateComponents(calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, year: 2022, month: 9, day: 11).date!,
                     data: items(),
-                    id: \.self) { element in
+                    id: \.self) { date, element in
                         Color.blue
                             .cornerRadius(4)
                             .padding(.vertical, 1.5)
@@ -204,6 +217,8 @@ struct TimeCalendar_Previews: PreviewProvider {
                                 Text("\(element.startDate) \(id)")
                                     .font(.caption)
                             }
+                    } placeholder: { date in
+                        Spacer()
                     }
                     .safeAreaInset(edge: .top) {
                         ScrollView(.horizontal) {

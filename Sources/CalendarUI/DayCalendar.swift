@@ -8,7 +8,7 @@
 import SwiftUI
 import PageView
 
-public struct DayCalendar<Data, ID, Content, Header> where Data : RandomAccessCollection, ID : Hashable {
+public struct DayCalendar<Data, ID, Content, Placeholder, Header> where Data : RandomAccessCollection, ID : Hashable {
     
     private var calendar: Calendar = Calendar.autoupdatingCurrent
     
@@ -18,7 +18,9 @@ public struct DayCalendar<Data, ID, Content, Header> where Data : RandomAccessCo
     
     public var data: Data
     
-    public var content: (Data.Element) -> Content
+    public var content: (Date, Data.Element) -> Content
+    
+    public var placeholder: (Date) -> Placeholder
     
     private var id: KeyPath<Data.Element, ID>
     
@@ -33,14 +35,15 @@ public struct DayCalendar<Data, ID, Content, Header> where Data : RandomAccessCo
     @State var timeCalendarAlpha: CGFloat = 1
 }
 
-extension DayCalendar: View where Content: View, Header: View, Data.Element: PeriodRepresentable {
+extension DayCalendar: View where Content: View, Placeholder: View, Header: View, Data.Element: PeriodRepresentable {
     
     public init(
         _ selection: Binding<Date>,
         timeZone: TimeZone = .autoupdatingCurrent,
         data: Data,
         id: KeyPath<Data.Element, ID>,
-        @ViewBuilder content: @escaping (Data.Element) -> Content,
+        @ViewBuilder content: @escaping (Date, Data.Element) -> Content,
+        @ViewBuilder placeholder: @escaping (Date) -> Placeholder,
         @ViewBuilder header: @escaping (Date) -> Header
     ) {
         self._selection = selection
@@ -52,6 +55,7 @@ extension DayCalendar: View where Content: View, Header: View, Data.Element: Per
         self.data = data
         self.id = id
         self.content = content
+        self.placeholder = placeholder
         self.header = header
     }
     
@@ -81,7 +85,7 @@ extension DayCalendar: View where Content: View, Header: View, Data.Element: Per
     public var body: some View {
         TabView(selection: $selection) {
             ForEach(rangeOfMonth, id: \.self) { date in
-                TimeCalendar(date, data: data, id: id, content: content)
+                TimeCalendar(date, data: data, id: id, content: content, placeholder: placeholder)
                     .tag(date)
             }
             .opacity(timeCalendarAlpha)
@@ -189,10 +193,12 @@ struct DayCalendar_Previews: PreviewProvider {
         
         var body: some View {
             let items = items()
-            DayCalendar($selection, data: items, id: \.id) { element in
+            DayCalendar($selection, data: items, id: \.id) { date, element in
                 Color.blue
                     .cornerRadius(4)
                     .padding(1.5)
+            } placeholder: { date in
+                Spacer()
             } header: { date in
                 let isToday = calendar.isDateInToday(selection)
                 let isSelected = calendar.isDate(selection, inSameDayAs: date)

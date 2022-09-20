@@ -37,13 +37,15 @@ struct ContentView: View {
     
     var body: some View {
         let items = items()
-        DayCalendar($selection, data: items, id: \.id) { element in
+        DayCalendar($selection, data: items, id: \.id) { date, element in
             Color.blue
                 .cornerRadius(4)
                 .padding(1.5)
 //                .overlay {
 //                    Text(element.startDate, format: .dateTime.month().day())
 //                }
+        } placeholder: { date in
+            Spacer()
         } header: { date in
             let isToday = calendar.isDateInToday(selection)
             let isSelected = calendar.isDate(selection, inSameDayAs: date)
