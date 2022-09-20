@@ -15,6 +15,7 @@ public protocol PeriodRepresentable {
 
 public struct TimeCalendar<Data, ID, Content> where Data : RandomAccessCollection, ID : Hashable, Data.Element: PeriodRepresentable {
     
+    @MainActor
     class Model: ObservableObject {
         
         struct TimeStride {
@@ -23,19 +24,45 @@ public struct TimeCalendar<Data, ID, Content> where Data : RandomAccessCollectio
             var itemsPassThrough: [ID]
         }
         
-        var timeStrides: [TimeStride]
+        @Published var timeStrides: [TimeStride] = []
+        
+        var startDate: Date
+        
+        var endDate: Date
+        
+        var data: Data
+        
+        var id: KeyPath<Data.Element, ID>
         
         init(startDate: Date, endDate: Date, data: Data, id: KeyPath<Data.Element, ID>) {
+            self.startDate = startDate
+            self.endDate = endDate
+            self.data = data
+            self.id = id
+        }
+        
+        func prepare() {
             let items: [Date] = stride(from: startDate, through: endDate, by: 15 * 60).map({ $0 })
             let length: Int = items.count - 1
-            self.timeStrides = (0..<length).map { index in
-                let start: Date = items[index]
-                let end: Date = items[index + 1]
-                let range: Range<Date> = start..<end
-                let itemsToStart: [ID] = data.filter({ $0.startDate == start }).map({ $0[keyPath: id] })
-                let itemsPassThrough: [ID] = data.filter({ ($0.startDate..<$0.endDate).intersects(range) }).map({ $0[keyPath: id] })
-                return TimeStride(date: start, itemsToStart: itemsToStart, itemsPassThrough: itemsPassThrough)
+            let id = id
+            let data = data
+            Task {
+                let timeStrides = (0..<length).map { index in
+                    let start: Date = items[index]
+                    let end: Date = items[index + 1]
+                    let range: Range<Date> = start..<end
+                    let itemsToStart: [ID] = data.filter({ $0.startDate == start }).map({ $0[keyPath: id] })
+                    let itemsPassThrough: [ID] = data.filter({ ($0.startDate..<$0.endDate).intersects(range) }).map({ $0[keyPath: id] })
+                    return TimeStride(date: start, itemsToStart: itemsToStart, itemsPassThrough: itemsPassThrough)
+                }
+                Task { @MainActor in
+                    self.timeStrides = timeStrides
+                }
             }
+        }
+        
+        func clear() {
+            self.timeStrides = []
         }
     }
     
@@ -134,6 +161,8 @@ extension TimeCalendar: View where Content: View {
             }
         }
         .frame(width: width, height: height, alignment: .top)
+        .onAppear { model.prepare() }
+        .onDisappear { model.clear() }
     }
     
     public var body: some View {
@@ -169,11 +198,6 @@ extension Range where Bound: Equatable {
     func intersects(_ range: Range<Bound>) -> Bool {
         self ~= range.lowerBound || range ~= self.lowerBound
     }
-}
-
-extension TimeCalendar {
-    
-
 }
 
 struct TimeCalendar_Previews: PreviewProvider {

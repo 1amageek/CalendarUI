@@ -125,10 +125,12 @@ extension DayCalendar: View where Content: View, Header: View, Data.Element: Per
 
 struct DayCalendar_Previews: PreviewProvider {
     
-    struct Item: PeriodRepresentable, Hashable {
+    struct Item: PeriodRepresentable, Identifiable {
+        var id: String
         var startDate: Date
         var endDate: Date
     }
+
     
     struct ContentView: View {
         
@@ -139,19 +141,26 @@ struct DayCalendar_Previews: PreviewProvider {
         @State var selection: Date = Date()
         
         func items() -> [Item] {
-//            (0..<100).map { index in
-//                let minutes = 15 * index
-//                return Item(
-//                    startDate: DateComponents(calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, year: 2022, month: 9, day: 11, hour: 0, minute: minutes).date!,
-//                    endDate: DateComponents(calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, year: 2022, month: 9, day: 11, hour: 0, minute: 15 * (index + 1)).date!
-//                )
-//            }
-            return []
+            var items = (0..<(20)).map { index in
+                let minutes = 15 * index
+                return Item(
+                    id: UUID().uuidString,
+                    startDate: DateComponents(calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, year: 2022, month: 9, day: 11, hour: 0, minute: minutes).date!,
+                    endDate: DateComponents(calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, year: 2022, month: 9, day: 11, hour: 0, minute: 15 * (index + 1)).date!
+                )
+            }
+            let minutes = 15 * 0
+            items.append(Item(
+                id: UUID().uuidString,
+                startDate: DateComponents(calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, year: 2022, month: 9, day: 11, hour: 0, minute: minutes).date!,
+                endDate: DateComponents(calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, year: 2022, month: 9, day: 11, hour: 0, minute: 15 * (0 + 1)).date!
+            ))
+            return items
         }
         
         var body: some View {
             let items = items()
-            DayCalendar($selection, data: items, id: \.self) { element in
+            DayCalendar($selection, data: items, id: \.id) { element in
                 Color.blue
                     .cornerRadius(4)
                     .padding(1.5)
