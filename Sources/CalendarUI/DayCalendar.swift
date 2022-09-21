@@ -137,7 +137,6 @@ extension DayCalendar: View where Content: View, Placeholder: View, Header: View
                 Divider()
             }
             .frame(height: 64)
-            .background(.bar)
         }
         .onAppear {
             selection = calendar.dateComponents([.calendar, .timeZone, .year, .month, .day], from: selection).date!
@@ -222,11 +221,12 @@ struct DayCalendar_Previews: PreviewProvider {
             } header: { date in
                 let isToday = calendar.isDateInToday(selection)
                 let isSelected = calendar.isDate(selection, inSameDayAs: date)
+                let selectedColor: Color = colorScheme == .dark ? .black : .white
                 Text(date, format: .dateTime.day())
                     .font(isSelected ? .body : nil )
                     .fontWeight(isSelected ? .bold : nil)
                     .frame(width: 34, height: 34)
-                    .foregroundColor(isSelected ? .white : nil)
+                    .foregroundColor(isSelected ? selectedColor : nil)
                     .background {
                         if calendar.isDate(selection, inSameDayAs: date) {
                             let selectecColor: Color = colorScheme == .dark ? .white : .black
@@ -252,5 +252,6 @@ struct DayCalendar_Previews: PreviewProvider {
         NavigationView {
             ContentView()
         }
+        .preferredColorScheme(.dark)
     }
 }
