@@ -11,17 +11,12 @@ public struct TimelineBackground: View {
         
     var insets: EdgeInsets
     
-    var start: Int = 0
-    
-    var end: Int = 24
-    
     var hideTime: Int?
     
-    var range: ClosedRange<Int> { start...end }
+    var range: ClosedRange<Int>
     
-    public init(start: Int = 0, end: Int = 24, hideTime: Int? = nil, insets: EdgeInsets = .init(top: 12, leading: 56, bottom: 12, trailing: 0)) {
-        self.start = start
-        self.end = end
+    public init(_ range: ClosedRange<Int> = 0...24, hideTime: Int? = nil, insets: EdgeInsets = .init(top: 12, leading: 56, bottom: 12, trailing: 0)) {
+        self.range = range
         self.hideTime = hideTime
         self.insets = insets
     }
@@ -31,14 +26,14 @@ public struct TimelineBackground: View {
             let height = (size.height - insets.top - insets.bottom) / CGFloat(range.count - 1)
             let start = insets.leading
             let end = size.width - insets.trailing
-            range.forEach { index in
+            range.enumerated().forEach { index, hour in
                 let y = insets.top + height * CGFloat(index)
                 let path = Path { path in
                     path.addLines([CGPoint(x: start, y: y), CGPoint(x: end, y: y)])
                 }
                 context.stroke(path, with: .color(.secondary), lineWidth: 0.5)
                 if let hideTime = hideTime, hideTime == index { return }
-                let text = Text("\(index):00").font(.caption).foregroundColor(.secondary)
+                let text = Text("\(hour):00").font(.caption).foregroundColor(.secondary)
                 context.draw(text, at: CGPoint(x: start - 8, y: y), anchor: .trailing)
             }
         }

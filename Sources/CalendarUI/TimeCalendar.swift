@@ -17,16 +17,10 @@ public struct TimeCalendar<Data, ID, Content, Placeholder> where Data : RandomAc
     
     class Model: ObservableObject {
         
-        var startDate: Date
-        
-        var endDate: Date
-        
         var strides: [Date]
         
-        init(startDate: Date, endDate: Date) {
-            self.startDate = startDate
-            self.endDate = endDate
-            self.strides = stride(from: startDate, to: endDate, by: 15 * 60).map({ $0 })
+        init(range: Range<Date>, minuteInterval: Int) {
+            self.strides = stride(from: range.lowerBound, to: range.upperBound, by: Date.Stride(minuteInterval * 60)).map({ $0 })
         }
     }
     
@@ -46,6 +40,10 @@ public struct TimeCalendar<Data, ID, Content, Placeholder> where Data : RandomAc
     
     public var data: Data
     
+    public var range: ClosedRange<Int>
+    
+    public var minuteInterval: Int
+    
     public var content: (Date, Data.Element) -> Content
     
     public var placeholder: (Date) -> Placeholder
@@ -61,15 +59,18 @@ extension TimeCalendar: View where Content: View, Placeholder: View {
         _ date: Date,
         data: Data,
         id: KeyPath<Data.Element, ID>,
+        in range: ClosedRange<Int> = 0...24,
+        minuteInterval: Int = 5,
         @ViewBuilder content: @escaping (Date, Data.Element) -> Content,
         @ViewBuilder placeholder: @escaping (Date) -> Placeholder
     ) {
         let calendar = Calendar(identifier: .iso8601)
         let startOfDay = calendar.startOfDay(for: date)
-        let nextDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
         self.date = startOfDay
         self.data = data
         self.id = id
+        self.range = range
+        self.minuteInterval = minuteInterval
         self.content = content
         self.placeholder = placeholder
         let formatter = DateFormatter()
@@ -79,11 +80,13 @@ extension TimeCalendar: View where Content: View, Placeholder: View {
         formatter.dateFormat = "HH:mm"
         self.formatter = formatter
         self.tagID = calendar.nextDate(after: date, matching: DateComponents(minute: 0), matchingPolicy: .strict)!
-        self._model = StateObject(wrappedValue: Model(startDate: startOfDay, endDate: nextDay))
+        let startDate = calendar.date(bySetting: .hour, value: range.lowerBound, of: startOfDay)!
+        let endDate = calendar.date(byAdding: .hour, value: range.count - 1, to: startDate)!
+        self._model = StateObject(wrappedValue: Model(range: startDate..<endDate, minuteInterval: minuteInterval))
     }
-    
+        
     func getHeight(size: CGSize, start: Date, end: Date) -> CGFloat {
-        let timeRatio = (end.timeIntervalSince1970 - start.timeIntervalSince1970) / 86440
+        let timeRatio = (end.timeIntervalSince1970 - start.timeIntervalSince1970) / CGFloat(3600 * (range.upperBound - range.lowerBound))
         let height = (size.height - (insets.top + insets.bottom)) * timeRatio
         return height
     }
@@ -91,7 +94,7 @@ extension TimeCalendar: View where Content: View, Placeholder: View {
     func getNow(size: CGSize) -> CGRect {
         let now = Date()
         let startOfDay = calendar.startOfDay(for: now)
-        let startRatio = (now.timeIntervalSince1970 - startOfDay.timeIntervalSince1970) / 86440
+        let startRatio = (now.timeIntervalSince1970 - startOfDay.timeIntervalSince1970) / CGFloat(3600 * (range.upperBound - range.lowerBound))
         let itemSize = CGSize(width: size.width, height: 20)
         let x = insets.leading + itemSize.width / 2
         let y = insets.top + (size.height - (insets.top + insets.bottom)) * startRatio
@@ -113,7 +116,7 @@ extension TimeCalendar: View where Content: View, Placeholder: View {
         let width = proxy.size.width
         let height = proxy.size.height + scale * magnifyBy
         let size = CGSize(width: width, height: height)
-        let cellHeight = height / (60 * 60 * 24) * 15 * 60
+        let cellHeight = height / CGFloat((range.upperBound - range.lowerBound) * 60 / minuteInterval)
         LazyVStack(spacing: 0) {
             ForEach(model.strides, id: \.self) { date in
                 VStack(alignment: .leading) {
@@ -147,7 +150,9 @@ extension TimeCalendar: View where Content: View, Placeholder: View {
                         .padding(.top, insets.top)
                         .padding(.bottom, insets.bottom)
                         .background {
-                            TimelineBackground(hideTime: calendar.isDateInToday(date) ? calendar.component(.hour, from: Date()) : nil, insets: insets)
+                            TimelineBackground(
+                                range,
+                                hideTime: calendar.isDateInToday(date) ? calendar.component(.hour, from: Date()) : nil, insets: insets)
                                 .gesture(magnification)
                         }
                         .overlay {
