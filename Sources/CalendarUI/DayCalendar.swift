@@ -136,8 +136,8 @@ extension DayCalendar: View where Content: View, Placeholder: View, Header: View
                     .padding(.bottom, 8)
                 Divider()
             }
-            .background(.bar)
             .frame(height: 64)
+            .background(.bar)
         }
         .onAppear {
             selection = calendar.dateComponents([.calendar, .timeZone, .year, .month, .day], from: selection).date!
@@ -162,6 +162,17 @@ extension DayCalendar: View where Content: View, Placeholder: View, Header: View
                 }
             }
         }
+    }
+}
+
+extension Date: Strideable {
+    
+    func advanced(by value: Int) -> Date {
+        Foundation.Calendar.current.date(byAdding: .second, value: value, to: self)!
+    }
+
+    func distance(to date: Date) -> Int {
+        Int(date.timeIntervalSince1970 - self.timeIntervalSince1970)
     }
 }
 
