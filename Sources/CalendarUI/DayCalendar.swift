@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import PageView
 
 public struct DayCalendar<Data, ID, Content, Placeholder, Header> where Data : RandomAccessCollection, ID : Hashable {
     
