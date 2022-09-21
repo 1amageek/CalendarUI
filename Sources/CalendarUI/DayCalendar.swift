@@ -1,5 +1,5 @@
 //
-//  SwiftUIView.swift
+//  DayCalendar.swift
 //  
 //
 //  Created by Norikazu Muramoto on 2022/09/15.
@@ -16,13 +16,17 @@ public struct DayCalendar<Data, ID, Content, Placeholder, Header> where Data : R
     
     private var startOfThisWeek: Date
     
+    private var id: KeyPath<Data.Element, ID>
+    
     public var data: Data
+    
+    public var range: ClosedRange<Int>
+    
+    public var minuteInterval: Int
     
     public var content: (Date, Data.Element) -> Content
     
     public var placeholder: (Date) -> Placeholder
-    
-    private var id: KeyPath<Data.Element, ID>
     
     public var header: (Date) -> Header
     
@@ -42,6 +46,8 @@ extension DayCalendar: View where Content: View, Placeholder: View, Header: View
         timeZone: TimeZone = .autoupdatingCurrent,
         data: Data,
         id: KeyPath<Data.Element, ID>,
+        in range: ClosedRange<Int> = 0...24,
+        minuteInterval: Int = 15,
         @ViewBuilder content: @escaping (Date, Data.Element) -> Content,
         @ViewBuilder placeholder: @escaping (Date) -> Placeholder,
         @ViewBuilder header: @escaping (Date) -> Header
@@ -57,6 +63,8 @@ extension DayCalendar: View where Content: View, Placeholder: View, Header: View
         self.content = content
         self.placeholder = placeholder
         self.header = header
+        self.range = range
+        self.minuteInterval = minuteInterval
     }
     
     func fileted(date: Date) -> [Data.Element] {
@@ -85,7 +93,13 @@ extension DayCalendar: View where Content: View, Placeholder: View, Header: View
     public var body: some View {
         TabView(selection: $selection) {
             ForEach(rangeOfMonth, id: \.self) { date in
-                TimeCalendar(date, data: data, id: id, content: content, placeholder: placeholder)
+                TimeCalendar(date,
+                             data: data,
+                             id: id,
+                             in: range,
+                             minuteInterval: minuteInterval,
+                             content: content,
+                             placeholder: placeholder)
                     .tag(date)
             }
             .opacity(timeCalendarAlpha)

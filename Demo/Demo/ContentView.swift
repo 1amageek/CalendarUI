@@ -25,11 +25,11 @@ struct ContentView: View {
     
     func items() -> [Item] {
         return (0..<(2000)).map { index in
-            let minutes = 5 * index
+            let minutes = 15 * index
             return Item(
                 id: "\(index)",
                 startDate: DateComponents(calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, year: 2022, month: 9, day: 11, hour: 0, minute: minutes).date!,
-                endDate: DateComponents(calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, year: 2022, month: 9, day: 11, hour: 0, minute: 5 * (index + 1)).date!
+                endDate: DateComponents(calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, year: 2022, month: 9, day: 11, hour: 0, minute: 15 * (index + 1)).date!
             )
         }
     }

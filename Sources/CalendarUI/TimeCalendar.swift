@@ -60,7 +60,7 @@ extension TimeCalendar: View where Content: View, Placeholder: View {
         data: Data,
         id: KeyPath<Data.Element, ID>,
         in range: ClosedRange<Int> = 0...24,
-        minuteInterval: Int = 5,
+        minuteInterval: Int = 15,
         @ViewBuilder content: @escaping (Date, Data.Element) -> Content,
         @ViewBuilder placeholder: @escaping (Date) -> Placeholder
     ) {
