@@ -17,9 +17,9 @@ public struct DayCalendar<Data, ID, Content, Placeholder, Header> where Data : R
     
     public var data: Data
     
-    public var range: ClosedRange<Int>
+    public var range: (Date) -> ClosedRange<Int>
     
-    public var minuteInterval: Int
+    public var minuteInterval: (Date) -> Int
     
     public var content: (Date, Data.Element) -> Content
     
@@ -43,8 +43,8 @@ extension DayCalendar: View where Content: View, Placeholder: View, Header: View
         timeZone: TimeZone = .autoupdatingCurrent,
         data: Data,
         id: KeyPath<Data.Element, ID>,
-        in range: ClosedRange<Int> = 0...24,
-        minuteInterval: Int = 15,
+        in range: ((Date) -> ClosedRange<Int>)? = nil,
+        minuteInterval: ((Date) -> Int)? = nil,
         @ViewBuilder content: @escaping (Date, Data.Element) -> Content,
         @ViewBuilder placeholder: @escaping (Date) -> Placeholder,
         @ViewBuilder header: @escaping (Date) -> Header
@@ -59,8 +59,8 @@ extension DayCalendar: View where Content: View, Placeholder: View, Header: View
         self.content = content
         self.placeholder = placeholder
         self.header = header
-        self.range = range
-        self.minuteInterval = minuteInterval
+        self.range = range ?? { _ in 0...24 }
+        self.minuteInterval = minuteInterval ?? { _ in 15 }
     }
     
     func fileted(date: Date) -> [Data.Element] {
@@ -92,8 +92,8 @@ extension DayCalendar: View where Content: View, Placeholder: View, Header: View
                 TimeCalendar(date,
                              data: data,
                              id: id,
-                             in: range,
-                             minuteInterval: minuteInterval,
+                             in: range(date),
+                             minuteInterval: minuteInterval(date),
                              content: content,
                              placeholder: placeholder)
                     .tag(date)
@@ -176,7 +176,6 @@ extension Date: Strideable {
     }
 }
 
-
 struct DayCalendar_Previews: PreviewProvider {
     
     struct Item: PeriodRepresentable, Identifiable {
@@ -213,7 +212,9 @@ struct DayCalendar_Previews: PreviewProvider {
         
         var body: some View {
             let items = items()
-            DayCalendar($selection, data: items, id: \.id) { date, element in
+            DayCalendar($selection,
+                        data: items,
+                        id: \.id) { date, element in
                 Color.blue
                     .cornerRadius(4)
                     .padding(1.5)
