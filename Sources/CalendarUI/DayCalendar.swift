@@ -136,6 +136,7 @@ extension DayCalendar: View where Content: View, Placeholder: View, Header: View
                     .padding(.bottom, 8)
                 Divider()
             }
+            .frame(maxWidth: .infinity)
             .frame(height: 64)
         }
         .onAppear {
