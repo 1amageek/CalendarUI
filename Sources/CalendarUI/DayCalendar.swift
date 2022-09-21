@@ -12,8 +12,6 @@ public struct DayCalendar<Data, ID, Content, Placeholder, Header> where Data : R
     
     private var calendar: Calendar = Calendar.autoupdatingCurrent
     
-    private var startOfToday: Date
-    
     private var startOfThisWeek: Date
     
     private var id: KeyPath<Data.Element, ID>
@@ -54,7 +52,6 @@ extension DayCalendar: View where Content: View, Placeholder: View, Header: View
     ) {
         self._selection = selection
         self._currentDay = State(initialValue: selection.wrappedValue)
-        self.startOfToday = calendar.dateComponents([.calendar, .timeZone, .year, .month, .day], from: Date()).date!
         self.startOfThisWeek = calendar.dateComponents([.calendar, .timeZone, .yearForWeekOfYear, .weekOfYear], from: Date()).date!
         let dateComponents = calendar.dateComponents([.calendar, .timeZone, .yearForWeekOfYear, .weekOfYear], from: Date())
         self._weekOfYear = State(initialValue: dateComponents.date!)
@@ -178,7 +175,6 @@ struct DayCalendar_Previews: PreviewProvider {
         var endDate: Date
     }
 
-    
     struct ContentView: View {
         
         @Environment(\.colorScheme) private var colorScheme: ColorScheme

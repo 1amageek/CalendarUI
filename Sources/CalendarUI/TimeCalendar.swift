@@ -101,16 +101,6 @@ extension TimeCalendar: View where Content: View, Placeholder: View {
         return CGRect(origin: CGPoint(x: x, y: y), size: itemSize)
     }
     
-    var magnification: some Gesture {
-        MagnificationGesture()
-            .updating($magnifyBy) { currentState, gestureState, transaction in
-                gestureState = currentState
-            }
-            .onEnded { value in
-                
-            }
-    }
-    
     @ViewBuilder
     func strideStack(proxy: GeometryProxy) -> some View {
         let width = proxy.size.width
@@ -153,7 +143,6 @@ extension TimeCalendar: View where Content: View, Placeholder: View {
                             TimelineBackground(
                                 range,
                                 hideTime: calendar.isDateInToday(date) ? calendar.component(.hour, from: Date()) : nil, insets: insets)
-                                .gesture(magnification)
                         }
                         .overlay {
                             if calendar.isDateInToday(date) {
@@ -169,75 +158,5 @@ extension TimeCalendar: View where Content: View, Placeholder: View {
                 }
             }
         }
-    }
-}
-
-extension Range where Bound: Equatable {
-    
-    func intersects(_ range: Range<Bound>) -> Bool {
-        self ~= range.lowerBound || range ~= self.lowerBound
-    }
-}
-
-struct TimeCalendar_Previews: PreviewProvider {
-    
-    struct Item: PeriodRepresentable, Hashable {
-        var startDate: Date
-        var endDate: Date
-    }
-    
-    struct ContentView: View {
-        
-        func items() -> [Item] {
-            (0..<(1)).map { index in
-                let minutes = 15 * index
-                return Item(
-                    startDate: DateComponents(calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, year: 2022, month: 9, day: 11, hour: 0, minute: minutes).date!,
-                    endDate: DateComponents(calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, year: 2022, month: 9, day: 11, hour: 0, minute: 15 * (index + 1)).date!
-                )
-            }
-        }
-        
-        var formatter: DateFormatter {
-            let formatter = DateFormatter()
-            formatter.calendar = .autoupdatingCurrent
-            formatter.timeZone = .autoupdatingCurrent
-            formatter.locale = Locale(identifier: "en_US_POSIX")
-            formatter.dateFormat = "HH:mm"
-            return formatter
-        }
-        
-        var body: some View {
-            TabView {
-                TimeCalendar(
-                    DateComponents(calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, year: 2022, month: 9, day: 11).date!,
-                    data: items(),
-                    id: \.self) { date, element in
-                        Color.blue
-                            .cornerRadius(4)
-                            .padding(.vertical, 1.5)
-                            .padding(.horizontal, 1)
-                            .overlay {
-                                let id = formatter.string(from: element.startDate)
-                                Text("\(element.startDate) \(id)")
-                                    .font(.caption)
-                            }
-                    } placeholder: { date in
-                        Spacer()
-                    }
-                    .safeAreaInset(edge: .top) {
-                        ScrollView(.horizontal) {
-                            Text("HEADER")
-                        }
-                        .frame(maxWidth: .infinity)
-                        .background(.bar)
-                    }
-            }
-            .environment(\.locale, Locale(identifier: "ja_JP"))
-        }
-    }
-    
-    static var previews: some View {
-        ContentView()
     }
 }
