@@ -19,7 +19,7 @@ public struct TimeCalendar<Data, ID, Content, Placeholder> where Data : RandomAc
         
         var strides: [Date]
         
-        init(range: Range<Date>, minuteInterval: Int) {
+        init(range: ClosedRange<Date>, minuteInterval: Int) {
             self.strides = stride(from: range.lowerBound, to: range.upperBound, by: Date.Stride(minuteInterval * 60)).map({ $0 })
         }
     }
@@ -28,7 +28,7 @@ public struct TimeCalendar<Data, ID, Content, Placeholder> where Data : RandomAc
     
     @Environment(\.calendar) var calendar: Calendar
     
-    private var scale: CGFloat = 2
+    private var scale: CGFloat = 1
     
     @GestureState var magnifyBy: CGFloat = 1.0
     
@@ -82,7 +82,7 @@ extension TimeCalendar: View where Content: View, Placeholder: View {
         self.tagID = calendar.nextDate(after: date, matching: DateComponents(minute: 0), matchingPolicy: .strict)!
         let startDate = calendar.date(bySetting: .hour, value: range.lowerBound, of: startOfDay)!
         let endDate = calendar.date(byAdding: .hour, value: range.count - 1, to: startDate)!
-        self._model = StateObject(wrappedValue: Model(range: startDate..<endDate, minuteInterval: minuteInterval))
+        self._model = StateObject(wrappedValue: Model(range: startDate...endDate, minuteInterval: minuteInterval))
     }
         
     func getHeight(size: CGSize, start: Date, end: Date) -> CGFloat {
@@ -106,7 +106,7 @@ extension TimeCalendar: View where Content: View, Placeholder: View {
         let width = proxy.size.width
         let height = proxy.size.height + CGFloat(minuteInterval * 60) * scale * magnifyBy
         let size = CGSize(width: width, height: height)
-        let cellHeight = height / CGFloat((range.upperBound - range.lowerBound) * 60 / minuteInterval)
+        let cellHeight = height / (CGFloat(range.upperBound - range.lowerBound) / CGFloat(minuteInterval) * 60)
         LazyVStack(spacing: 0) {
             ForEach(model.strides, id: \.self) { date in
                 VStack(alignment: .leading) {
@@ -184,13 +184,13 @@ struct TimeCalendar_Previews: PreviewProvider {
                 startDate: DateComponents(calendar: .autoupdatingCurrent, year: 2022, month: 10, day: 11).date!,
                 endDate: DateComponents(calendar: .autoupdatingCurrent, year: 2022, month: 10, day: 11, hour: 2).date!)
         ]
-        TimeCalendar(Date(), data: data, id: \.self, in: 10...20, minuteInterval: 15) { date, _ in
+        TimeCalendar(Date(), data: data, id: \.self, in: 16...29, minuteInterval: 15) { date, _ in
             Color.green
                 .padding(2)
         } placeholder: { date in
             Color.blue
                 .padding(2)
         }
-        .padding()
+        .padding(.vertical, 16)
     }
 }
