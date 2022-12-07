@@ -28,7 +28,7 @@ public struct TimeCalendar<Data, ID, Content, Placeholder> where Data : RandomAc
     
     @Environment(\.calendar) var calendar: Calendar
     
-    private var scale: CGFloat = 3800
+    private var scale: CGFloat = 2
     
     @GestureState var magnifyBy: CGFloat = 1.0
     
@@ -104,7 +104,7 @@ extension TimeCalendar: View where Content: View, Placeholder: View {
     @ViewBuilder
     func strideStack(proxy: GeometryProxy) -> some View {
         let width = proxy.size.width
-        let height = proxy.size.height + scale * magnifyBy
+        let height = proxy.size.height + CGFloat(minuteInterval * 60) * scale * magnifyBy
         let size = CGSize(width: width, height: height)
         let cellHeight = height / CGFloat((range.upperBound - range.lowerBound) * 60 / minuteInterval)
         LazyVStack(spacing: 0) {
@@ -158,5 +158,39 @@ extension TimeCalendar: View where Content: View, Placeholder: View {
                 }
             }
         }
+    }
+}
+
+
+struct TimeCalendar_Previews: PreviewProvider {
+
+    static var dateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "d"
+        return f
+    }()
+    
+    struct Item: PeriodRepresentable, Hashable {
+        var startDate: Date
+        var endDate: Date
+    }
+
+    static var previews: some View {
+        let data: [Item] = [
+            Item(
+                startDate: DateComponents(calendar: .autoupdatingCurrent, year: 2022, month: 10, day: 11).date!,
+                endDate: DateComponents(calendar: .autoupdatingCurrent, year: 2022, month: 10, day: 11, hour: 1).date!),
+            Item(
+                startDate: DateComponents(calendar: .autoupdatingCurrent, year: 2022, month: 10, day: 11).date!,
+                endDate: DateComponents(calendar: .autoupdatingCurrent, year: 2022, month: 10, day: 11, hour: 2).date!)
+        ]
+        TimeCalendar(Date(), data: data, id: \.self, in: 10...20, minuteInterval: 15) { date, _ in
+            Color.green
+                .padding(2)
+        } placeholder: { date in
+            Color.blue
+                .padding(2)
+        }
+        .padding()
     }
 }
