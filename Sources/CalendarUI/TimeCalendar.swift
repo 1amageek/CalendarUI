@@ -138,7 +138,7 @@ extension TimeCalendar: View where Content: View, Placeholder: View {
         let height = proxy.size.height + CGFloat(minuteInterval * 60) * scale * magnifyBy
         TimelineLayout(date: date, insets: insets, in: range) {
             ForEach(data, id: id) { item in
-                content(Date(), item)
+                content(item.startDate, item)
                     .calendarItem(item)
             }
         }

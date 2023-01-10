@@ -244,19 +244,18 @@ struct DayCalendar_Previews: PreviewProvider {
                 Spacer()
             } header: { date in
                 let isToday = calendar.isDateInToday(date)
-                let isSelectedToday = calendar.isDateInToday(selection)
                 let isSelected = calendar.isDate(selection, inSameDayAs: date)
-                let selectedColor: Color = colorScheme == .dark ? .black : .white
+                let selectedTextColor: Color = colorScheme == .dark ? .black : .white
                 Text(date, format: .dateTime.day())
                     .font(isSelected ? .body : nil )
                     .fontWeight(isSelected ? .bold : nil)
-                    .foregroundColor(isSelected ? selectedColor : isToday ? .red : nil)
+                    .foregroundColor(isSelected ? selectedTextColor : (isToday ? .red : nil))
                     .frame(height: 34)
                     .background {
                         if calendar.isDate(selection, inSameDayAs: date) {
-                            let selectecColor: Color = colorScheme == .dark ? .white : .black
+                            let selectecCircleColor: Color = colorScheme == .dark ? .white : .black
                             Circle()
-                                .fill(isSelectedToday ? .red : selectecColor)
+                                .fill(isToday ? .red : selectecCircleColor)
                                 .frame(width: 34, height: 34)
                         }
                     }
@@ -278,6 +277,6 @@ struct DayCalendar_Previews: PreviewProvider {
         NavigationView {
             ContentView()
         }
-        .preferredColorScheme(.dark)
+//        .preferredColorScheme(.dark)
     }
 }
