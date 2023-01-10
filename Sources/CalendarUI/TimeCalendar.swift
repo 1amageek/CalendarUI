@@ -132,11 +132,25 @@ extension TimeCalendar: View where Content: View, Placeholder: View {
         .frame(width: width, height: height, alignment: .top)
     }
     
+    @ViewBuilder
+    func collectionView(proxy: GeometryProxy) -> some View {
+        let width = proxy.size.width
+        let height = proxy.size.height + CGFloat(minuteInterval * 60) * scale * magnifyBy
+        TimelineLayout(date: date, insets: insets, in: range) {
+            ForEach(data, id: id) { item in
+                content(Date(), item)
+                    .calendarItem(item)
+            }
+        }
+        .frame(width: width, height: height, alignment: .top)
+    }
+    
     public var body: some View {
         GeometryReader { proxy in
             ScrollViewReader { scroll in
                 ScrollView {
-                    strideStack(proxy: proxy)
+//                    strideStack(proxy: proxy)
+                    collectionView(proxy: proxy)
                         .padding(.top, insets.top)
                         .padding(.bottom, insets.bottom)
                         .background {
@@ -161,6 +175,68 @@ extension TimeCalendar: View where Content: View, Placeholder: View {
     }
 }
 
+struct TimelineLayout: Layout {
+    
+    var date: Date
+    var insets: EdgeInsets
+    var range: ClosedRange<Int>
+    
+    init(
+        date: Date,
+        insets: EdgeInsets,
+        in range: ClosedRange<Int> = 0...24
+    ) {
+        self.date = date
+        self.insets = insets
+        self.range = range
+    }
+    
+    func convertTimeInterval(_ period: Range<Date>) -> (TimeInterval, TimeInterval) {
+        let calendar = Calendar.autoupdatingCurrent
+        let starthour = calendar.component(.hour, from: period.lowerBound)
+        let startminutes = calendar.component(.minute, from: period.lowerBound)
+        let endhour = calendar.component(.hour, from: period.lowerBound)
+        let endminutes = calendar.component(.minute, from: period.lowerBound)
+        return (TimeInterval(starthour * 3600 + startminutes * 60), TimeInterval(endhour * 3600 + endminutes * 60))
+    }
+    
+    func timeInterval(_ date: Date) -> TimeInterval {
+        let calendar = Calendar.autoupdatingCurrent
+        let hour = calendar.component(.hour, from: date)
+        let minutes = calendar.component(.minute, from: date)
+        return TimeInterval(hour * 3600 + minutes * 60)
+    }
+    
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        proposal.replacingUnspecifiedDimensions()
+    }
+    
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        guard !subviews.isEmpty else { return }
+        let timeRange = CGFloat((range.upperBound - range.lowerBound) * 3600)
+        let height = bounds.height
+        for (_, subview) in subviews.enumerated() {
+            let period: Range<Date> = subview[Period.self]
+            let start = timeInterval(period.lowerBound) - (TimeInterval(range.lowerBound) * 3600)
+            let end = timeInterval(period.upperBound) - (TimeInterval(range.lowerBound) * 3600)
+            let point = CGPoint(x: insets.leading, y: insets.top + height * start / timeRange)
+            let height = height * (end - start) / timeRange
+            let placementProposal = ProposedViewSize(width: bounds.width - insets.leading - insets.trailing, height: height)
+            subview.place(at: point, anchor: .topLeading, proposal: placementProposal)
+        }
+    }
+}
+
+private struct Period: LayoutValueKey {
+    static let defaultValue: Range<Date> = Date()..<Date()
+}
+
+extension View {
+    
+    func calendarItem<T: PeriodRepresentable>(_ item: T) -> some View {
+        return layoutValue(key: Period.self, value: item.startDate..<item.endDate)
+    }
+}
 
 struct TimeCalendar_Previews: PreviewProvider {
 
@@ -178,13 +254,13 @@ struct TimeCalendar_Previews: PreviewProvider {
     static var previews: some View {
         let data: [Item] = [
             Item(
-                startDate: DateComponents(calendar: .autoupdatingCurrent, year: 2022, month: 10, day: 11).date!,
-                endDate: DateComponents(calendar: .autoupdatingCurrent, year: 2022, month: 10, day: 11, hour: 1).date!),
+                startDate: DateComponents(calendar: .autoupdatingCurrent, year: 2023, month: 1, day: 10).date!,
+                endDate: DateComponents(calendar: .autoupdatingCurrent, year: 2023, month: 1, day: 10, hour: 1).date!),
             Item(
-                startDate: DateComponents(calendar: .autoupdatingCurrent, year: 2022, month: 10, day: 11).date!,
-                endDate: DateComponents(calendar: .autoupdatingCurrent, year: 2022, month: 10, day: 11, hour: 2).date!)
+                startDate: DateComponents(calendar: .autoupdatingCurrent, year: 2023, month: 1, day: 10, hour: 3).date!,
+                endDate: DateComponents(calendar: .autoupdatingCurrent, year: 2023, month: 1, day: 10, hour: 6).date!),
         ]
-        TimeCalendar(Date(), data: data, id: \.self, in: 16...29, minuteInterval: 15) { date, _ in
+        TimeCalendar(Date(), data: data, id: \.self, in: 1...7, minuteInterval: 15) { date, _ in
             Color.green
                 .padding(2)
         } placeholder: { date in

@@ -34,6 +34,24 @@ public struct DayCalendar<Data, ID, Content, Placeholder, Header> where Data : R
     @State var currentDay: Date
     
     @State var timeCalendarAlpha: CGFloat = 1
+    
+}
+
+extension DayCalendar {
+    
+    private var longPressGesture: some Gesture {
+        LongPressGesture(minimumDuration: 1, maximumDistance: 5)
+            .onChanged { value in
+                print("LongPressGesture", value)
+            }
+    }
+    
+    private var dragGesture: some Gesture {
+        DragGesture(minimumDistance: 0, coordinateSpace: .local)
+            .onChanged { value in
+                print("DragGesture", value)
+            }
+    }
 }
 
 extension DayCalendar: View where Content: View, Placeholder: View, Header: View, Data.Element: PeriodRepresentable {
@@ -97,6 +115,8 @@ extension DayCalendar: View where Content: View, Placeholder: View, Header: View
                              content: content,
                              placeholder: placeholder)
                     .tag(date)
+//                    .onTapGesture { }
+//                    .gesture(SimultaneousGesture(longPressGesture, dragGesture))
             }
             .opacity(timeCalendarAlpha)
             .onAppear {
@@ -192,21 +212,23 @@ struct DayCalendar_Previews: PreviewProvider {
         
         @State var selection: Date = Date()
         
+        let dateComponent = Calendar.current.dateComponents(in: .current, from: Date())
+        
         func items() -> [Item] {
-            var items = (0..<(20)).map { index in
+            let items = (0..<(20)).map { index in
                 let minutes = 15 * index
+                var startDateDateComponent = dateComponent
+                startDateDateComponent.hour = 0
+                startDateDateComponent.minute = minutes
+                var endDateDateComponent = dateComponent
+                endDateDateComponent.hour = 0
+                endDateDateComponent.minute = 15 * (index + 1)
                 return Item(
                     id: UUID().uuidString,
-                    startDate: DateComponents(calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, year: 2022, month: 9, day: 11, hour: 0, minute: minutes).date!,
-                    endDate: DateComponents(calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, year: 2022, month: 9, day: 11, hour: 0, minute: 15 * (index + 1)).date!
+                    startDate: startDateDateComponent.date!,
+                    endDate: endDateDateComponent.date!
                 )
             }
-            let minutes = 15 * 0
-            items.append(Item(
-                id: UUID().uuidString,
-                startDate: DateComponents(calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, year: 2022, month: 9, day: 11, hour: 0, minute: minutes).date!,
-                endDate: DateComponents(calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, year: 2022, month: 9, day: 11, hour: 0, minute: 15 * (0 + 1)).date!
-            ))
             return items
         }
         
@@ -221,19 +243,21 @@ struct DayCalendar_Previews: PreviewProvider {
             } placeholder: { date in
                 Spacer()
             } header: { date in
-                let isToday = calendar.isDateInToday(selection)
+                let isToday = calendar.isDateInToday(date)
+                let isSelectedToday = calendar.isDateInToday(selection)
                 let isSelected = calendar.isDate(selection, inSameDayAs: date)
                 let selectedColor: Color = colorScheme == .dark ? .black : .white
                 Text(date, format: .dateTime.day())
                     .font(isSelected ? .body : nil )
                     .fontWeight(isSelected ? .bold : nil)
-                    .frame(width: 34, height: 34)
-                    .foregroundColor(isSelected ? selectedColor : nil)
+                    .foregroundColor(isSelected ? selectedColor : isToday ? .red : nil)
+                    .frame(height: 34)
                     .background {
                         if calendar.isDate(selection, inSameDayAs: date) {
                             let selectecColor: Color = colorScheme == .dark ? .white : .black
                             Circle()
-                                .fill(isToday ? .red : selectecColor)
+                                .fill(isSelectedToday ? .red : selectecColor)
+                                .frame(width: 34, height: 34)
                         }
                     }
             }

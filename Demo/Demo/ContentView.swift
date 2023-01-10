@@ -23,19 +23,11 @@ struct ContentView: View {
     
     @State var selection: Date = Date()
     
-    func items() -> [Item] {
-        return (0..<(2000)).map { index in
-            let minutes = 15 * index
-            return Item(
-                id: "\(index)",
-                startDate: DateComponents(calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, year: 2022, month: 9, day: 11, hour: 0, minute: minutes).date!,
-                endDate: DateComponents(calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, year: 2022, month: 9, day: 11, hour: 0, minute: 15 * (index + 1)).date!
-            )
-        }
-    }
+    @State var items: [Item] = []
+    
+    @State var isPreseneted: Bool = false
     
     var body: some View {
-        let items = items()
         DayCalendar($selection, data: items, id: \.id) { date, element in
             Color.blue
                 .cornerRadius(4)
@@ -70,6 +62,56 @@ struct ContentView: View {
                 }
             }
             .padding(.horizontal, 16)
+        }
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    self.isPreseneted = true
+                } label: {
+                    Image(systemName: "plus")
+                }
+            }
+        }
+        .sheet(isPresented: $isPreseneted) {
+            NavigationStack {
+                Editor(items: $items)
+            }
+        }
+    }
+}
+
+struct Editor: View {
+    
+    @Environment(\.dismiss) var dismiss: DismissAction
+    
+    @Binding var items: [Item]
+    
+    @State var item: Item
+    
+    init(items: Binding<[Item]>) {
+        let startDate = Date()
+        let endDate = Calendar.current.date(byAdding: .hour, value: 1, to: startDate)!
+        let item = Item(id: UUID().uuidString, startDate: startDate, endDate: endDate)
+        self._item = State(initialValue: item)
+        self._items = items
+    }
+    
+    var body: some View {
+        List {
+            DatePicker("Start", selection: $item.startDate)
+            DatePicker("End", selection: $item.endDate)
+        }
+        .navigationTitle("Edit")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    items.append(item)
+                    dismiss()
+                } label: {
+                    Text("Save")
+                }
+            }
         }
     }
 }
