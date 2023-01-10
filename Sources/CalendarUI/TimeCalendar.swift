@@ -191,15 +191,6 @@ struct TimelineLayout: Layout {
         self.range = range
     }
     
-    func convertTimeInterval(_ period: Range<Date>) -> (TimeInterval, TimeInterval) {
-        let calendar = Calendar.autoupdatingCurrent
-        let starthour = calendar.component(.hour, from: period.lowerBound)
-        let startminutes = calendar.component(.minute, from: period.lowerBound)
-        let endhour = calendar.component(.hour, from: period.lowerBound)
-        let endminutes = calendar.component(.minute, from: period.lowerBound)
-        return (TimeInterval(starthour * 3600 + startminutes * 60), TimeInterval(endhour * 3600 + endminutes * 60))
-    }
-    
     func timeInterval(_ date: Date) -> TimeInterval {
         let calendar = Calendar.autoupdatingCurrent
         let hour = calendar.component(.hour, from: date)
