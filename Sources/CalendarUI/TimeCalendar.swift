@@ -28,7 +28,7 @@ public struct TimeCalendar<Data, ID, Content, Placeholder> where Data : RandomAc
     
     @Environment(\.calendar) var calendar: Calendar
     
-    private var scale: CGFloat = 1
+    private var scale: CGFloat = 2
     
     @GestureState var magnifyBy: CGFloat = 1.0
     
@@ -193,9 +193,8 @@ struct TimelineLayout: Layout {
     
     func timeInterval(_ date: Date) -> TimeInterval {
         let calendar = Calendar.autoupdatingCurrent
-        let hour = calendar.component(.hour, from: date)
-        let minutes = calendar.component(.minute, from: date)
-        return TimeInterval(hour * 3600 + minutes * 60)
+        let start = calendar.date(bySetting: .hour, value: range.lowerBound, of: self.date)!
+        return date.timeIntervalSince1970 - start.timeIntervalSince1970
     }
     
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
@@ -208,8 +207,8 @@ struct TimelineLayout: Layout {
         let height = bounds.height
         for (_, subview) in subviews.enumerated() {
             let period: Range<Date> = subview[Period.self]
-            let start = timeInterval(period.lowerBound) - (TimeInterval(range.lowerBound) * 3600)
-            let end = timeInterval(period.upperBound) - (TimeInterval(range.lowerBound) * 3600)
+            let start = timeInterval(period.lowerBound)
+            let end = timeInterval(period.upperBound)
             let point = CGPoint(x: insets.leading, y: insets.top + height * start / timeRange)
             let height = height * (end - start) / timeRange
             let placementProposal = ProposedViewSize(width: bounds.width - insets.leading - insets.trailing, height: height)

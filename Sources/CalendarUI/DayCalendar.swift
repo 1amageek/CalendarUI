@@ -215,21 +215,31 @@ struct DayCalendar_Previews: PreviewProvider {
         let dateComponent = Calendar.current.dateComponents(in: .current, from: Date())
         
         func items() -> [Item] {
-            let items = (0..<(20)).map { index in
-                let minutes = 15 * index
-                var startDateDateComponent = dateComponent
-                startDateDateComponent.hour = 0
-                startDateDateComponent.minute = minutes
-                var endDateDateComponent = dateComponent
-                endDateDateComponent.hour = 0
-                endDateDateComponent.minute = 15 * (index + 1)
-                return Item(
-                    id: UUID().uuidString,
-                    startDate: startDateDateComponent.date!,
-                    endDate: endDateDateComponent.date!
-                )
-            }
-            return items
+            let startDate = DateComponents(calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, year: 2023, month: 1, day: 10, hour: 0).date!
+            let endDate = DateComponents(calendar: .autoupdatingCurrent, timeZone: .autoupdatingCurrent, year: 2023, month: 1, day: 10, hour: 23, minute: 60).date!
+            return stride(from: startDate, to: endDate, by: 15 * 60)
+                .map { date in
+                    return Item(
+                        id: UUID().uuidString,
+                        startDate: date,
+                        endDate: date.addingTimeInterval(15 * 60)
+                    )
+                }
+//            let items = (0..<(20)).map { index in
+//                let minutes = 15 * index
+//                var startDateDateComponent = dateComponent
+//                startDateDateComponent.hour = 0
+//                startDateDateComponent.minute = minutes
+//                var endDateDateComponent = dateComponent
+//                endDateDateComponent.hour = 0
+//                endDateDateComponent.minute = 15 * (index + 1)
+//                return Item(
+//                    id: UUID().uuidString,
+//                    startDate: startDateDateComponent.date!,
+//                    endDate: endDateDateComponent.date!
+//                )
+//            }
+//            return items
         }
         
         var body: some View {
@@ -240,6 +250,13 @@ struct DayCalendar_Previews: PreviewProvider {
                 Color.blue
                     .cornerRadius(4)
                     .padding(1.5)
+                    .overlay {
+                        Text(date, format: .dateTime.hour().minute())
+                            .font(.caption)
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 12)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
             } placeholder: { date in
                 Spacer()
             } header: { date in
