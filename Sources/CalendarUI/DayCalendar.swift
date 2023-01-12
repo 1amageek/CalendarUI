@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import PageView
 
 public struct DayCalendar<Data, ID, Content, Placeholder, Header> where Data : RandomAccessCollection, ID : Hashable {
     
@@ -23,9 +24,13 @@ public struct DayCalendar<Data, ID, Content, Placeholder, Header> where Data : R
     
     public var content: (Date, Data.Element) -> Content
     
-    public var placeholder: (Date) -> Placeholder
+    public var placeholder: (Date, Data.Element) -> Placeholder
     
     public var header: (Date) -> Header
+    
+    private var onChangeGesture: ((SimultaneousGesture<LongPressGesture, DragGesture>.Value) -> Void)?
+    
+    private var onEndGesture: ((SimultaneousGesture<LongPressGesture, DragGesture>.Value) -> Void)?
     
     @Binding var selection: Date
     
@@ -39,22 +44,22 @@ public struct DayCalendar<Data, ID, Content, Placeholder, Header> where Data : R
 
 extension DayCalendar {
     
-    private var longPressGesture: some Gesture {
-        LongPressGesture(minimumDuration: 1, maximumDistance: 5)
+    private var gesture: some Gesture {
+        SimultaneousGesture(LongPressGesture(minimumDuration: 0.2, maximumDistance: 5), DragGesture(minimumDistance: 0, coordinateSpace: .local))
             .onChanged { value in
-                print("LongPressGesture", value)
+                if let onChangeGesture = onChangeGesture {
+                    onChangeGesture(value)
+                }
             }
-    }
-    
-    private var dragGesture: some Gesture {
-        DragGesture(minimumDistance: 0, coordinateSpace: .local)
-            .onChanged { value in
-                print("DragGesture", value)
+            .onEnded { value in
+                if let onEndGesture = onEndGesture {
+                    onEndGesture(value)
+                }
             }
     }
 }
 
-extension DayCalendar: View where Content: View, Placeholder: View, Header: View, Data.Element: PeriodRepresentable {
+extension DayCalendar: View where Content: View, Header: View, Placeholder: View, Data.Element: PeriodRepresentable {
     
     public init(
         _ selection: Binding<Date>,
@@ -64,13 +69,16 @@ extension DayCalendar: View where Content: View, Placeholder: View, Header: View
         in range: ((Date) -> ClosedRange<Int>)? = nil,
         minuteInterval: ((Date) -> Int)? = nil,
         @ViewBuilder content: @escaping (Date, Data.Element) -> Content,
-        @ViewBuilder placeholder: @escaping (Date) -> Placeholder,
-        @ViewBuilder header: @escaping (Date) -> Header
+        @ViewBuilder placeholder: @escaping (Date, Data.Element) -> Placeholder,
+        @ViewBuilder header: @escaping (Date) -> Header,
+        onChangeGesture: ((SimultaneousGesture<LongPressGesture, DragGesture>.Value) -> Void)? = nil,
+        onEndGesture: ((SimultaneousGesture<LongPressGesture, DragGesture>.Value) -> Void)? = nil
     ) {
+        let today = Date()
         self._selection = selection
         self._currentDay = State(initialValue: selection.wrappedValue)
-        self.startOfThisWeek = calendar.dateComponents([.calendar, .timeZone, .yearForWeekOfYear, .weekOfYear], from: Date()).date!
-        let dateComponents = calendar.dateComponents([.calendar, .timeZone, .yearForWeekOfYear, .weekOfYear], from: Date())
+        let dateComponents = calendar.dateComponents([.calendar, .timeZone, .yearForWeekOfYear, .weekOfYear], from: today)
+        self.startOfThisWeek = dateComponents.date!
         self._weekOfYear = State(initialValue: dateComponents.date!)
         self.data = data
         self.id = id
@@ -79,58 +87,62 @@ extension DayCalendar: View where Content: View, Placeholder: View, Header: View
         self.header = header
         self.range = range ?? { _ in 0...24 }
         self.minuteInterval = minuteInterval ?? { _ in 15 }
+        self.onChangeGesture = onChangeGesture
+        self.onEndGesture = onEndGesture
     }
     
     func fileted(date: Date) -> [Data.Element] {
-        data.filter { item in
-            let startDateIsSameDay = calendar.isDate(item.startDate, inSameDayAs: date)
-            let endDateIsSameDay = calendar.isDate(item.endDate, inSameDayAs: date)
-            let isInThePeiod = item.startDate <= date && date < item.endDate
-            return startDateIsSameDay || endDateIsSameDay || isInThePeiod
+        let startDate = date
+        let endDate = calendar.date(byAdding: .day, value: 1, to: date)!
+        return data.filter { item in
+            startDate <= item.startDate && item.startDate < endDate ||
+            startDate < item.endDate && item.endDate <= endDate ||
+            item.startDate <= startDate && endDate < item.endDate
         }
     }
     
-    var startOfMonth: Date {
-        calendar.date(byAdding: .day, value: -1, to: calendar.dateComponents([.calendar, .timeZone, .yearForWeekOfYear, .weekOfYear], from: weekOfYear).date!)!
+    var selectionDate: Binding<Int> {
+        Binding {
+            return calendar.dateComponents([.day], from: startOfThisWeek, to: selection).day!
+        } set: { newValue in
+            self.selection = calendar.date(byAdding: .day, value: newValue, to: startOfThisWeek)!
+        }
     }
     
-    var endOfMonth: Date {
-        let date = calendar
-            .date(byAdding: .weekOfYear, value: 1, to: weekOfYear)!
-        return calendar.date(byAdding: .day, value: 2, to: date)!
-    }
-    
-    var rangeOfMonth: Array<Date> {
-        Array(stride(from: startOfMonth, through: endOfMonth, by: 60 * 60 * 24))
+    var bindingWeekOfYear: Binding<Int> {
+        Binding {
+            return calendar.dateComponents([.weekOfYear], from: startOfThisWeek, to: weekOfYear).weekOfYear!
+        } set: { newValue in
+            self.weekOfYear = calendar.date(byAdding: .weekOfYear, value: newValue, to: startOfThisWeek)!
+        }
     }
     
     public var body: some View {
-        TabView(selection: $selection) {
-            ForEach(rangeOfMonth, id: \.self) { date in
+        PageView(selectionDate) {
+            ForEach(-9999..<9999, id: \.self) { index in
+                let date = calendar.date(byAdding: .day, value: index, to: startOfThisWeek)!
+                let filteredData = fileted(date: date)
                 TimeCalendar(date,
-                             data: data,
+                             data: filteredData,
                              id: id,
                              in: range(date),
                              minuteInterval: minuteInterval(date),
-                             content: content,
-                             placeholder: placeholder)
-                    .tag(date)
-//                    .onTapGesture { }
-//                    .gesture(SimultaneousGesture(longPressGesture, dragGesture))
-            }
-            .opacity(timeCalendarAlpha)
-            .onAppear {
-                withAnimation(.easeOut(duration: 0.2)) {
-                    self.timeCalendarAlpha = 1
-                }
+                             content: content)
+                    .onTapGesture { }
+                    .gesture(gesture)
+                    .opacity(timeCalendarAlpha)
+                    .onAppear {
+                        withAnimation(.easeOut(duration: 0.2)) {
+                            self.timeCalendarAlpha = 1
+                        }
+                    }
             }
         }
-        .tabViewStyle(.page(indexDisplayMode: .never))
         .safeAreaInset(edge: .top) {
             VStack(spacing: 0) {
                 ScrollViewReader { scrollView in
-                    TabView(selection: $weekOfYear) {
-                        ForEach(-99..<99) { weekOffset in
+                    PageView(bindingWeekOfYear) {
+                        ForEach(-9999..<9999, id: \.self) { weekOffset in
                             let weekOfYear = calendar.date(byAdding: .weekOfYear, value: weekOffset, to: startOfThisWeek)!
                             LazyVGrid(columns: Array(repeating: .init(), count: 7)) {
                                 ForEach(0..<7) { index in
@@ -159,14 +171,9 @@ extension DayCalendar: View where Content: View, Placeholder: View, Header: View
             .frame(maxWidth: .infinity)
             .frame(height: 64)
         }
-        .onAppear {
-            selection = calendar.dateComponents([.calendar, .timeZone, .year, .month, .day], from: selection).date!
-            weekOfYear = calendar.dateComponents([.calendar, .timeZone, .yearForWeekOfYear, .weekOfYear], from: selection).date!
-        }
         .onChange(of: selection) { newValue in
             let date = calendar.dateComponents([.calendar, .timeZone, .yearForWeekOfYear, .weekOfYear], from: newValue).date!
             if weekOfYear != date {
-                self.timeCalendarAlpha = 0
                 withAnimation {
                     weekOfYear = date
                 }
@@ -182,17 +189,6 @@ extension DayCalendar: View where Content: View, Placeholder: View, Header: View
                 }
             }
         }
-    }
-}
-
-extension Date: Strideable {
-    
-    func advanced(by value: Int) -> Date {
-        Foundation.Calendar.current.date(byAdding: .second, value: value, to: self)!
-    }
-
-    func distance(to date: Date) -> Int {
-        Int(date.timeIntervalSince1970 - self.timeIntervalSince1970)
     }
 }
 
@@ -225,28 +221,17 @@ struct DayCalendar_Previews: PreviewProvider {
                         endDate: date.addingTimeInterval(15 * 60)
                     )
                 }
-//            let items = (0..<(20)).map { index in
-//                let minutes = 15 * index
-//                var startDateDateComponent = dateComponent
-//                startDateDateComponent.hour = 0
-//                startDateDateComponent.minute = minutes
-//                var endDateDateComponent = dateComponent
-//                endDateDateComponent.hour = 0
-//                endDateDateComponent.minute = 15 * (index + 1)
-//                return Item(
-//                    id: UUID().uuidString,
-//                    startDate: startDateDateComponent.date!,
-//                    endDate: endDateDateComponent.date!
-//                )
-//            }
-//            return items
         }
         
         var body: some View {
             let items = items()
-            DayCalendar($selection,
-                        data: items,
-                        id: \.id) { date, element in
+            DayCalendar(
+                $selection,
+                data: items,
+                id: \.id,
+                in: { _ in  6...24 },
+                minuteInterval: { _ in 5 }
+            ) { date, element in
                 Color.blue
                     .cornerRadius(4)
                     .padding(1.5)
@@ -257,8 +242,8 @@ struct DayCalendar_Previews: PreviewProvider {
                             .padding(.horizontal, 12)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
-            } placeholder: { date in
-                Spacer()
+            } placeholder: { _, _ in
+                EmptyView()
             } header: { date in
                 let isToday = calendar.isDateInToday(date)
                 let isSelected = calendar.isDate(selection, inSameDayAs: date)
@@ -267,13 +252,13 @@ struct DayCalendar_Previews: PreviewProvider {
                     .font(isSelected ? .body : nil )
                     .fontWeight(isSelected ? .bold : nil)
                     .foregroundColor(isSelected ? selectedTextColor : (isToday ? .red : nil))
-                    .frame(height: 34)
+                    .frame(height: 36)
                     .background {
                         if calendar.isDate(selection, inSameDayAs: date) {
                             let selectecCircleColor: Color = colorScheme == .dark ? .white : .black
                             Circle()
                                 .fill(isToday ? .red : selectecCircleColor)
-                                .frame(width: 34, height: 34)
+                                .frame(width: 36, height: 36)
                         }
                     }
             }
@@ -294,6 +279,6 @@ struct DayCalendar_Previews: PreviewProvider {
         NavigationView {
             ContentView()
         }
-//        .preferredColorScheme(.dark)
+        .preferredColorScheme(.dark)
     }
 }

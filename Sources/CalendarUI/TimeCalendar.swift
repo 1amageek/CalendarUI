@@ -13,7 +13,7 @@ public protocol PeriodRepresentable {
     var endDate: Date { get }
 }
 
-public struct TimeCalendar<Data, ID, Content, Placeholder> where Data : RandomAccessCollection, ID : Hashable, Data.Element: PeriodRepresentable {
+public struct TimeCalendar<Data, ID, Content> where Data : RandomAccessCollection, ID : Hashable, Data.Element: PeriodRepresentable {
     
     class Model: ObservableObject {
         
@@ -28,7 +28,7 @@ public struct TimeCalendar<Data, ID, Content, Placeholder> where Data : RandomAc
     
     @Environment(\.calendar) var calendar: Calendar
     
-    private var scale: CGFloat = 2
+    private var scale: CGFloat = 1
     
     @GestureState var magnifyBy: CGFloat = 1.0
     
@@ -46,14 +46,12 @@ public struct TimeCalendar<Data, ID, Content, Placeholder> where Data : RandomAc
     
     public var content: (Date, Data.Element) -> Content
     
-    public var placeholder: (Date) -> Placeholder
-    
     var id: KeyPath<Data.Element, ID>
     
     var tagID: Date
 }
 
-extension TimeCalendar: View where Content: View, Placeholder: View {
+extension TimeCalendar: View where Content: View {
     
     public init(
         _ date: Date,
@@ -61,8 +59,7 @@ extension TimeCalendar: View where Content: View, Placeholder: View {
         id: KeyPath<Data.Element, ID>,
         in range: ClosedRange<Int> = 0...24,
         minuteInterval: Int = 15,
-        @ViewBuilder content: @escaping (Date, Data.Element) -> Content,
-        @ViewBuilder placeholder: @escaping (Date) -> Placeholder
+        @ViewBuilder content: @escaping (Date, Data.Element) -> Content
     ) {
         let calendar = Calendar(identifier: .iso8601)
         let startOfDay = calendar.startOfDay(for: date)
@@ -72,7 +69,6 @@ extension TimeCalendar: View where Content: View, Placeholder: View {
         self.range = range
         self.minuteInterval = minuteInterval
         self.content = content
-        self.placeholder = placeholder
         let formatter = DateFormatter()
         formatter.calendar = .autoupdatingCurrent
         formatter.timeZone = .autoupdatingCurrent
@@ -111,15 +107,10 @@ extension TimeCalendar: View where Content: View, Placeholder: View {
             ForEach(model.strides, id: \.self) { date in
                 VStack(alignment: .leading) {
                     HStack(alignment: .top, spacing: 0.5) {
-                        let items = data.filter({ $0.startDate == date })
-                        if items.isEmpty {
-                            placeholder(date)
-                        } else {
-                            ForEach(items, id: id) { item in
-                                let height = getHeight(size: size, start: item.startDate, end: item.endDate)
-                                content(date, item)
-                                    .frame(height: height)
-                            }
+                        ForEach(data, id: id) { item in
+                            let height = getHeight(size: size, start: item.startDate, end: item.endDate)
+                            content(date, item)
+                                .frame(height: height)
                         }
                     }
                     .frame(height: cellHeight, alignment: .top)
@@ -135,7 +126,9 @@ extension TimeCalendar: View where Content: View, Placeholder: View {
     @ViewBuilder
     func collectionView(proxy: GeometryProxy) -> some View {
         let width = proxy.size.width
-        let height = proxy.size.height + CGFloat(minuteInterval * 60) * scale * magnifyBy
+        let itemsCount = CGFloat(range.upperBound - range.lowerBound) * 60.0 / CGFloat(minuteInterval)
+        let preferredHight = itemsCount * 44.0 * (scale * magnifyBy)
+        let height = max(preferredHight, proxy.size.height)
         TimelineLayout(date: date, insets: insets, in: range) {
             ForEach(data, id: id) { item in
                 content(item.startDate, item)
@@ -252,9 +245,6 @@ struct TimeCalendar_Previews: PreviewProvider {
         ]
         TimeCalendar(Date(), data: data, id: \.self, in: 1...7, minuteInterval: 15) { date, _ in
             Color.green
-                .padding(2)
-        } placeholder: { date in
-            Color.blue
                 .padding(2)
         }
         .padding(.vertical, 16)

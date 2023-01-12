@@ -27,6 +27,10 @@ struct ContentView: View {
     
     @State var isPreseneted: Bool = false
     
+    init(items: [Item] = []) {
+        self._items = State(initialValue: items)
+    }
+    
     var body: some View {
         DayCalendar($selection, data: items, id: \.id) { date, element in
             Color.blue
@@ -35,7 +39,7 @@ struct ContentView: View {
 //                .overlay {
 //                    Text(element.startDate, format: .dateTime.month().day())
 //                }
-        } placeholder: { date in
+        } placeholder: { date, _ in
             Spacer()
         } header: { date in
             let isToday = calendar.isDateInToday(selection)

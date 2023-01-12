@@ -9,11 +9,13 @@ let package = Package(
     products: [
         .library(name: "CalendarUI", targets: ["CalendarUI"]),
     ],
-    dependencies: [],
+    dependencies: [
+        .package(url: "git@github.com:1amageek/PageView.git", branch: "main"),
+    ],
     targets: [
         .target(
             name: "CalendarUI",
-            dependencies: []),
+            dependencies: ["PageView"]),
         .testTarget(
             name: "CalendarUITests",
             dependencies: ["CalendarUI"]),
