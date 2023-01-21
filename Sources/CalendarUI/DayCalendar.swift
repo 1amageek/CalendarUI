@@ -171,6 +171,10 @@ extension DayCalendar: View where Content: View, Header: View, Placeholder: View
             .frame(maxWidth: .infinity)
             .frame(height: 64)
         }
+        .onAppear {
+            selection = calendar.dateComponents([.calendar, .timeZone, .year, .month, .day], from: selection).date!
+            weekOfYear = calendar.dateComponents([.calendar, .timeZone, .yearForWeekOfYear, .weekOfYear], from: selection).date!
+        }
         .onChange(of: selection) { newValue in
             let date = calendar.dateComponents([.calendar, .timeZone, .yearForWeekOfYear, .weekOfYear], from: newValue).date!
             if weekOfYear != date {

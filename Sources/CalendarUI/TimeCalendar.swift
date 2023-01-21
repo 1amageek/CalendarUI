@@ -243,7 +243,7 @@ struct TimeCalendar_Previews: PreviewProvider {
                 startDate: DateComponents(calendar: .autoupdatingCurrent, year: 2023, month: 1, day: 10, hour: 3).date!,
                 endDate: DateComponents(calendar: .autoupdatingCurrent, year: 2023, month: 1, day: 10, hour: 6).date!),
         ]
-        TimeCalendar(Date(), data: data, id: \.self, in: 1...7, minuteInterval: 15) { date, _ in
+        TimeCalendar(Date(), data: data, id: \.self, in: 0...12, minuteInterval: 15) { date, _ in
             Color.green
                 .padding(2)
         }

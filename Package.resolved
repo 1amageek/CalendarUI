@@ -1,0 +1,14 @@
+{
+  "pins" : [
+    {
+      "identity" : "pageview",
+      "kind" : "remoteSourceControl",
+      "location" : "git@github.com:1amageek/PageView.git",
+      "state" : {
+        "branch" : "main",
+        "revision" : "2226b36aefc1d650af73a047a8f1c45d4bbc67d1"
+      }
+    }
+  ],
+  "version" : 2
+}
