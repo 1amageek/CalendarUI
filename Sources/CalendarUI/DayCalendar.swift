@@ -8,7 +8,7 @@
 import SwiftUI
 import PageView
 
-public struct DayCalendar<Data, ID, Content, Placeholder, Header> where Data : RandomAccessCollection, ID : Hashable {
+public struct DayCalendar<Data, ID, Content, Placeholder, Day, Header> where Data : RandomAccessCollection, ID : Hashable {
     
     private var calendar: Calendar = Calendar.autoupdatingCurrent
     
@@ -26,7 +26,9 @@ public struct DayCalendar<Data, ID, Content, Placeholder, Header> where Data : R
     
     public var placeholder: (Date, Data.Element) -> Placeholder
     
-    public var header: (Date) -> Header
+    public var day: (Date) -> Day
+    
+    public var header: ((Date) -> Header)?
     
     private var onChangeGesture: ((SimultaneousGesture<LongPressGesture, DragGesture>.Value) -> Void)?
     
@@ -59,7 +61,7 @@ extension DayCalendar {
     }
 }
 
-extension DayCalendar: View where Content: View, Header: View, Placeholder: View, Data.Element: PeriodRepresentable {
+extension DayCalendar: View where Content: View, Day: View, Header: View, Placeholder: View, Data.Element: PeriodRepresentable {
     
     public init(
         _ selection: Binding<Date>,
@@ -70,6 +72,7 @@ extension DayCalendar: View where Content: View, Header: View, Placeholder: View
         minuteInterval: ((Date) -> Int)? = nil,
         @ViewBuilder content: @escaping (Date, Data.Element) -> Content,
         @ViewBuilder placeholder: @escaping (Date, Data.Element) -> Placeholder,
+        @ViewBuilder day: @escaping (Date) -> Day,
         @ViewBuilder header: @escaping (Date) -> Header,
         onChangeGesture: ((SimultaneousGesture<LongPressGesture, DragGesture>.Value) -> Void)? = nil,
         onEndGesture: ((SimultaneousGesture<LongPressGesture, DragGesture>.Value) -> Void)? = nil
@@ -84,7 +87,39 @@ extension DayCalendar: View where Content: View, Header: View, Placeholder: View
         self.id = id
         self.content = content
         self.placeholder = placeholder
+        self.day = day
         self.header = header
+        self.range = range ?? { _ in 0...24 }
+        self.minuteInterval = minuteInterval ?? { _ in 15 }
+        self.onChangeGesture = onChangeGesture
+        self.onEndGesture = onEndGesture
+    }
+    
+    public init(
+        _ selection: Binding<Date>,
+        timeZone: TimeZone = .autoupdatingCurrent,
+        data: Data,
+        id: KeyPath<Data.Element, ID>,
+        in range: ((Date) -> ClosedRange<Int>)? = nil,
+        minuteInterval: ((Date) -> Int)? = nil,
+        @ViewBuilder content: @escaping (Date, Data.Element) -> Content,
+        @ViewBuilder placeholder: @escaping (Date, Data.Element) -> Placeholder,
+        @ViewBuilder day: @escaping (Date) -> Day,
+        onChangeGesture: ((SimultaneousGesture<LongPressGesture, DragGesture>.Value) -> Void)? = nil,
+        onEndGesture: ((SimultaneousGesture<LongPressGesture, DragGesture>.Value) -> Void)? = nil
+    ) where Header == EmptyView {
+        let today = Date()
+        self._selection = selection
+        self._currentDay = State(initialValue: selection.wrappedValue)
+        let dateComponents = calendar.dateComponents([.calendar, .timeZone, .yearForWeekOfYear, .weekOfYear], from: today)
+        self.startOfThisWeek = dateComponents.date!
+        self._weekOfYear = State(initialValue: dateComponents.date!)
+        self.data = data
+        self.id = id
+        self.content = content
+        self.placeholder = placeholder
+        self.day = day
+        self.header = { _ in EmptyView() }
         self.range = range ?? { _ in 0...24 }
         self.minuteInterval = minuteInterval ?? { _ in 15 }
         self.onChangeGesture = onChangeGesture
@@ -140,36 +175,42 @@ extension DayCalendar: View where Content: View, Header: View, Placeholder: View
         }
         .safeAreaInset(edge: .top) {
             VStack(spacing: 0) {
-                ScrollViewReader { scrollView in
-                    PageView(bindingWeekOfYear) {
-                        ForEach(-9999..<9999, id: \.self) { weekOffset in
-                            let weekOfYear = calendar.date(byAdding: .weekOfYear, value: weekOffset, to: startOfThisWeek)!
-                            LazyVGrid(columns: Array(repeating: .init(), count: 7)) {
-                                ForEach(0..<7) { index in
-                                    let date = calendar.date(byAdding: .day, value: index, to: weekOfYear)!
-                                    header(date)
-                                        .contentShape(Rectangle())
-                                        .onTapGesture {
-                                            withAnimation {
-                                                selection = date
+                VStack(spacing: 0) {
+                    ScrollViewReader { scrollView in
+                        PageView(bindingWeekOfYear) {
+                            ForEach(-9999..<9999, id: \.self) { weekOffset in
+                                let weekOfYear = calendar.date(byAdding: .weekOfYear, value: weekOffset, to: startOfThisWeek)!
+                                LazyVGrid(columns: Array(repeating: .init(), count: 7)) {
+                                    ForEach(0..<7) { index in
+                                        let date = calendar.date(byAdding: .day, value: index, to: weekOfYear)!
+                                        day(date)
+                                            .contentShape(Rectangle())
+                                            .onTapGesture {
+                                                withAnimation {
+                                                    selection = date
+                                                }
                                             }
-                                        }
+                                    }
                                 }
+                                .padding(.horizontal, 16)
+                                .tag(weekOfYear)
                             }
-                            .padding(.horizontal, 16)
-                            .tag(weekOfYear)
                         }
+                        .tabViewStyle(.page(indexDisplayMode: .never))
                     }
-                    .tabViewStyle(.page(indexDisplayMode: .never))
+                    Text(selection, format: .dateTime.year().month().day())
+                        .font(.callout)
+                        .padding(.top, 2)
+                        .padding(.bottom, 8)
+                    Divider()
                 }
-                Text(selection, format: .dateTime.year().month().day())
-                    .font(.callout)
-                    .padding(.top, 2)
-                    .padding(.bottom, 8)
-                Divider()
+                .frame(height: 66)
+                .frame(maxWidth: .infinity)
+                if let header {
+                    header(selection)
+                    Divider()
+                }
             }
-            .frame(maxWidth: .infinity)
-            .frame(height: 64)
         }
         .onAppear {
             selection = calendar.dateComponents([.calendar, .timeZone, .year, .month, .day], from: selection).date!
@@ -248,7 +289,7 @@ struct DayCalendar_Previews: PreviewProvider {
                     }
             } placeholder: { _, _ in
                 EmptyView()
-            } header: { date in
+            } day: { date in
                 let isToday = calendar.isDateInToday(date)
                 let isSelected = calendar.isDate(selection, inSameDayAs: date)
                 let selectedTextColor: Color = colorScheme == .dark ? .black : .white
@@ -256,7 +297,7 @@ struct DayCalendar_Previews: PreviewProvider {
                     .font(isSelected ? .body : nil )
                     .fontWeight(isSelected ? .bold : nil)
                     .foregroundColor(isSelected ? selectedTextColor : (isToday ? .red : nil))
-                    .frame(height: 36)
+                    .frame(height: 66)
                     .background {
                         if calendar.isDate(selection, inSameDayAs: date) {
                             let selectecCircleColor: Color = colorScheme == .dark ? .white : .black
@@ -265,6 +306,9 @@ struct DayCalendar_Previews: PreviewProvider {
                                 .frame(width: 36, height: 36)
                         }
                     }
+            } header: { date in
+                Color.blue.opacity(0.2)
+                    .frame(height: 30)
             }
             .safeAreaInset(edge: .top) {
                 LazyVGrid(columns: Array(repeating: .init(), count: 7)) {

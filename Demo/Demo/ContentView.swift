@@ -41,13 +41,13 @@ struct ContentView: View {
 //                }
         } placeholder: { date, _ in
             Spacer()
-        } header: { date in
+        } day: { date in
             let isToday = calendar.isDateInToday(selection)
             let isSelected = calendar.isDate(selection, inSameDayAs: date)
             Text(date, format: .dateTime.day())
                 .font(isSelected ? .body : nil )
                 .fontWeight(isSelected ? .bold : nil)
-                .frame(width: 34, height: 34)
+                .frame(width: 36, height: 36)
                 .foregroundColor(isSelected ? .white : nil)
                 .background {
                     if calendar.isDate(selection, inSameDayAs: date) {
@@ -63,6 +63,7 @@ struct ContentView: View {
                     let weekdaySymbol = calendar.shortWeekdaySymbols[index]
                     Text(weekdaySymbol)
                         .font(.caption2)
+                        .padding(0)
                 }
             }
             .padding(.horizontal, 16)
