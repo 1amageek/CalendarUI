@@ -10,7 +10,7 @@ let package = Package(
         .library(name: "CalendarUI", targets: ["CalendarUI"]),
     ],
     dependencies: [
-        .package(url: "git@github.com:1amageek/PageView.git", branch: "main"),
+        .package(url: "https://github.com/1amageek/PageView.git", branch: "main"),
     ],
     targets: [
         .target(
