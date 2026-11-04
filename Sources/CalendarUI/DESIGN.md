@@ -27,7 +27,7 @@ flowchart TD
 ```
 
 ## Contracts and Invariants
-Component implementations remain in their owning directories. Calendar and timeline logic is tested through the same internal operations used by production views. Views run on SwiftUI's UI isolation; calculations hold value state only. There are no background tasks, streams, or shared mutable global stores.
+Component implementations remain in their owning directories. DateCalculation and TimeCalendar delegate bounded date iteration to Foundation's date sequences; their callers consume the same month dates and timeline intervals. Calendar and timeline logic is tested through the same internal operations used by production views. Views run on SwiftUI's UI isolation; calculations hold value state only. There are no background tasks, streams, or shared mutable global stores.
 
 ## Verification and Change Impact
 [Tests](../../Tests/CalendarUITests) cover each component by name. Calendar/time-axis changes require corresponding view integration tests. Platform or public signature changes require the parent design and README to be checked.

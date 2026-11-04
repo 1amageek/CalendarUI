@@ -19,6 +19,8 @@ Caller -> TimeCalendar -> DateCalculation / SwiftUI
 ```
 
 ## Contracts and Invariants
+Foundation's Calendar.dates(byAdding:startingAt:in:) owns minute and hour enumeration. The component explicitly includes the first slot/hour mark and closes the final slot at the visible end. It materializes only the output intervals/marks required by rendering, without an intermediate array of slot starts. Standard sequence iteration replaces manual date increments; half-open event intersection and coordinate conversion remain presentation policies.
+
 Use one TimeAxis for events, slots, labels, current time, and scroll targets. Ranges satisfy 0 <= lower < upper <= 24; minuteInterval is 1...1440. Events use half-open periods and are clipped to the visible interval; reversed/empty/outside periods are excluded. Slots advance in elapsed minutes, so daylight-saving transitions retain all real instants. Every scroll target is the start of a rendered slot, including empty calendars and String event IDs. A periodic SwiftUI TimelineView updates the current-time line while mounted; it creates no independent scheduler or background task. Events preserve input order and may overlap; collision lanes are not part of this API.
 
 ## State, Ownership, and Lifecycle

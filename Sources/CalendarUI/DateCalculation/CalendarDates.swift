@@ -32,12 +32,14 @@ struct CalendarDates {
     static func monthDates(year: Int, month: Int, calendar: Calendar) -> [Date] {
         let first = monthStart(year: year, month: month, calendar: calendar)
         let end = adding(.month, value: 1, to: first, calendar: calendar)
-        var cursor = start(of: .weekOfYear, for: first, calendar: calendar)
-        var dates: [Date] = []
-        repeat {
-            dates.append(cursor)
-            cursor = adding(.day, value: 1, to: cursor, calendar: calendar)
-        } while cursor < end || dates.count % 7 != 0
+        let gridStart = start(of: .weekOfYear, for: first, calendar: calendar)
+        guard let finalWeek = calendar.dateInterval(of: .weekOfYear, for: end) else {
+            preconditionFailure("The final calendar week cannot be represented.")
+        }
+        let gridEnd = end == finalWeek.start ? end : finalWeek.end
+        // Foundation's sequence excludes its anchor and keeps additions relative to it.
+        var dates = [gridStart]
+        dates.append(contentsOf: calendar.dates(byAdding: .day, startingAt: gridStart, in: gridStart..<gridEnd))
         return dates
     }
 

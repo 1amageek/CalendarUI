@@ -29,12 +29,12 @@ struct TimeAxis: Hashable {
         self.minuteInterval = minuteInterval
         self.period = DateInterval(start: start, end: end)
         var slots: [DateInterval] = []
-        var cursor = start
-        while cursor < end {
-            let slotEnd = min(cursor.addingTimeInterval(Double(minuteInterval) * 60), end)
-            slots.append(DateInterval(start: cursor, end: slotEnd))
-            cursor = slotEnd
+        var slotStart = start
+        for slotEnd in calendar.dates(byAdding: .minute, value: minuteInterval, startingAt: start, in: start..<end) {
+            slots.append(DateInterval(start: slotStart, end: slotEnd))
+            slotStart = slotEnd
         }
+        slots.append(DateInterval(start: slotStart, end: end))
         self.slots = slots
     }
 
@@ -56,12 +56,8 @@ struct TimeAxis: Hashable {
     }
 
     var hourMarks: [Date] {
-        var result: [Date] = []
-        var cursor = period.start
-        while cursor < period.end {
-            result.append(cursor)
-            cursor = CalendarDates.adding(.hour, value: 1, to: cursor, calendar: calendar)
-        }
+        var result = [period.start]
+        result.append(contentsOf: calendar.dates(byAdding: .hour, startingAt: period.start, in: period.start..<period.end))
         result.append(period.end)
         return result
     }

@@ -16,6 +16,8 @@ CalendarUI does not persist events, expand recurrence rules, or execute schedule
 
 ## Foundation integration
 
+Month dates, timeline slots, and hour marks are enumerated with Foundation's `Calendar.dates(byAdding:startingAt:in:)`. CalendarUI supplies the visible range, explicitly includes the initial boundary, and clips the final slot. Anchoring additions to the original date also avoids cumulative time shifts after a nonexistent midnight.
+
 Expand recurring events in your application with Foundation's [`Calendar.RecurrenceRule`](https://developer.apple.com/documentation/foundation/calendar/recurrencerule). Pass `recurrences(of:in:)` a finite visible date range, map its dates to your event model, and supply those events to CalendarUI. There is no CalendarUI recurrence-rule type or custom recurrence engine to configure.
 
 The `ClosedRange` recurrence overloads available since OS 26.4 also work with the OS 27 deployment floor. A closed range includes its upper boundary; CalendarUI's event display uses half-open periods and excludes an occurrence that starts exactly at the visible end. Foundation's `DateInterval.contains` and `intersects` use closed intervals, so they are not direct substitutes for this event-overlap policy.

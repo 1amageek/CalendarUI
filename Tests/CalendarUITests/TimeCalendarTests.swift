@@ -2,6 +2,27 @@ import Testing
 @testable import CalendarUI
 
 struct TimeCalendarTests {
+    @Test func singleSlotIncludesFirstAndLastBoundaries() {
+        let calendar = TestDates.calendar()
+        let axis = TimeAxis(date: TestDates.date(), range: 8...9, minuteInterval: 1440, calendar: calendar)
+        #expect(axis.slots == [axis.period])
+        #expect(axis.hourMarks == [axis.period.start, axis.period.end])
+        #expect(axis.scrollTarget(now: TestDates.date(2026, 11, 4, 8, 30)) == axis.period.start)
+    }
+
+    @Test func repeatedHourRetainsSeparateInstantsAndCoordinates() {
+        let calendar = TestDates.calendar("America/Los_Angeles")
+        let date = TestDates.date(2026, 11, 1, calendar: calendar)
+        let axis = TimeAxis(date: date, range: 0...24, minuteInterval: 60, calendar: calendar)
+        let repeated = axis.hourMarks.filter { calendar.component(.hour, from: $0) == 1 }
+        #expect(repeated.count == 2)
+        guard repeated.count == 2 else { return }
+        #expect(repeated[1].timeIntervalSince(repeated[0]) == 3600)
+        #expect(axis.offset(for: repeated[1], height: 2500) - axis.offset(for: repeated[0], height: 2500) == 100)
+        #expect(axis.slots.map(\.start).contains(repeated[0]))
+        #expect(axis.slots.map(\.start).contains(repeated[1]))
+    }
+
     @Test func currentTimeAndEventsShareTheVisibleAxis() {
         let calendar = TestDates.calendar()
         let axis = TimeAxis(date: TestDates.date(), range: 8...20, minuteInterval: 15, calendar: calendar)

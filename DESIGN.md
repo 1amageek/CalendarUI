@@ -24,6 +24,7 @@ flowchart TD
 - Existing calendar view names and event protocols remain available. The unused two-argument DayCalendar placeholder becomes a date-only empty-slot builder; README documents the source migration.
 - Public nonthrowing initializers reject invalid ranges and nonpositive intervals with documented preconditions rather than silently changing inputs.
 - Calendar calculations use the supplied time zone throughout. Rendering and scroll targets share the timeline's calculation owner.
+- Foundation owns day/minute/hour enumeration through Calendar.dates(byAdding:startingAt:in:). CalendarUI owns visible ranges, inclusion of the initial boundary, final-slot clipping, and rendering coordinates.
 
 ## Verification and Change Impact
 Module behavioral tests own calendar and rendering regressions. Package integration requires native macOS tests and builds for installed Apple SDKs. Source-only compilation for an SDK is not runtime evidence. Recheck platform declarations, demo callers, and README when changing public APIs.
@@ -40,5 +41,8 @@ Module behavioral tests own calendar and rendering regressions. Package integrat
 | Empty-slot builders | NativeRenderingTests | Empty calendars invoke placeholders; occupied slots render event builders instead |
 | Paging and lifecycle | NativeRenderingTests | Programmatic next-day movement and recentering to 2060 retain selection and update mounted content/header |
 | Standard Foundation interoperability | FoundationIntegrationTests, NativeRenderingTests | Date-sequence parity across leap/year boundaries and 30/60-minute clock changes; standard RecurrenceRule expansion, OS 26.4 closed-range overloads, and actual recurring-event rendering verified |
+| Standard sequence migration | CalendarDatesTests, TimeCalendarTests | The midnight-transition regression failed on the previous cumulative day loop and passed after migration; single-slot boundaries and repeated-hour instants/coordinates also verified |
 
-The final native run passed **22 tests in 7 suites** on macOS 27.0.1 with Swift 6.4.1. The other platform results are compilation evidence; their device interaction was not exercised. Xcode 27.1 requires its default toolchain for manifest resolution in this environment; builds used the explicit Swift 6.4.1 `SWIFT_EXEC` setting for production sources. Every command had an outer timeout. The initial multi-architecture demo build exceeded 120 seconds during SDK module compilation; the bounded arm64 build succeeded. Temporary derived data and the local verification build directory are removed after validation.
+The final native run passed **25 tests in 7 suites** on macOS 27.0.1 with Swift 6.4.1. After the sequence migration, the two changed calculation sources were also compiled and linked for arm64 iOS Simulator 27.1, watchOS Simulator 27.0, and tvOS Simulator 27.0. Each artifact's LC_BUILD_VERSION confirmed the intended simulator platform and minimum OS 27.0. SDKROOT was explicitly set to the target SDK for these direct compiler checks. These are compilation/link evidence; other platforms' device interaction was not exercised.
+
+Xcode 27.1 requires its default toolchain for manifest resolution in this environment; package builds used the explicit Swift 6.4.1 `SWIFT_EXEC` setting for production sources. Every command had an outer timeout. The initial multi-architecture demo build exceeded 120 seconds during SDK module compilation; the bounded arm64 build succeeded. Temporary derived data and the local verification build directory are removed after validation.
