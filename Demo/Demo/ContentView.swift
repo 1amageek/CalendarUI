@@ -39,7 +39,7 @@ struct ContentView: View {
 //                .overlay {
 //                    Text(element.startDate, format: .dateTime.month().day())
 //                }
-        } placeholder: { date, _ in
+        } placeholder: { date in
             Spacer()
         } day: { date in
             let isToday = calendar.isDateInToday(selection)

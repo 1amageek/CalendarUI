@@ -5,17 +5,16 @@ import PackageDescription
 
 let package = Package(
     name: "CalendarUI",
-    platforms: [.iOS(.v16), .macOS(.v12), .watchOS(.v8), .tvOS(.v15)],
+    platforms: [.iOS("27.0"), .macOS("27.0"), .watchOS("27.0"), .tvOS("27.0")],
     products: [
         .library(name: "CalendarUI", targets: ["CalendarUI"]),
     ],
-    dependencies: [
-        .package(url: "https://github.com/1amageek/PageView.git", branch: "main"),
-    ],
+    dependencies: [],
     targets: [
         .target(
             name: "CalendarUI",
-            dependencies: ["PageView"]),
+            dependencies: [],
+            exclude: ["DESIGN.md", "DateCalculation/DESIGN.md", "MonthCalendar/DESIGN.md", "WeekCalendar/DESIGN.md", "DayCalendar/DESIGN.md", "TimeCalendar/DESIGN.md"]),
         .testTarget(
             name: "CalendarUITests",
             dependencies: ["CalendarUI"]),
