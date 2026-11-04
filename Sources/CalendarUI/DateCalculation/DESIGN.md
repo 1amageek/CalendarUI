@@ -31,3 +31,5 @@ Nonthrowing public view construction uses explicit preconditions for invalid con
 
 ## Verification and Change Impact
 [CalendarDatesTests](../../../Tests/CalendarUITests/CalendarDatesTests.swift) owns regression evidence. Native hosting tests verify actual view-builder invocation and scrolling. Changes to dates or time coordinates require rechecking callers and the [module](../DESIGN.md).
+
+[FoundationIntegrationTests](../../../Tests/CalendarUITests/FoundationIntegrationTests.swift) independently compares month grids against Foundation's date sequences, including leap years, year boundaries, and different first weekdays. It also proves why the half-open overlap policy cannot be replaced directly with DateInterval's closed-interval intersection.

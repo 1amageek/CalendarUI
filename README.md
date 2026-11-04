@@ -14,6 +14,14 @@ Calendar-aware dates, paging, and timeline placement
 
 CalendarUI does not persist events, expand recurrence rules, or execute scheduled tasks.
 
+## Foundation integration
+
+Expand recurring events in your application with Foundation's [`Calendar.RecurrenceRule`](https://developer.apple.com/documentation/foundation/calendar/recurrencerule). Pass `recurrences(of:in:)` a finite visible date range, map its dates to your event model, and supply those events to CalendarUI. There is no CalendarUI recurrence-rule type or custom recurrence engine to configure.
+
+The `ClosedRange` recurrence overloads available since OS 26.4 also work with the OS 27 deployment floor. A closed range includes its upper boundary; CalendarUI's event display uses half-open periods and excludes an occurrence that starts exactly at the visible end. Foundation's `DateInterval.contains` and `intersects` use closed intervals, so they are not direct substitutes for this event-overlap policy.
+
+The [Foundation integration tests](Tests/CalendarUITests/FoundationIntegrationTests.swift) compare calendar enumeration with `Calendar.dates(byAdding:...)`, cover leap/year boundaries and 30/60-minute daylight-saving transitions, and verify placement of standard recurring events. Native hosting tests also render events expanded by Foundation.
+
 ## Installation
 
 Add `https://github.com/1amageek/CalendarUI.git` in Xcode's package dependencies and link the `CalendarUI` product. Select a reviewed revision or release appropriate to your application.

@@ -29,3 +29,5 @@ Nonthrowing public view construction uses explicit preconditions for invalid con
 
 ## Verification and Change Impact
 [TimeCalendarTests](../../../Tests/CalendarUITests/TimeCalendarTests.swift) owns regression evidence. Native hosting tests verify actual view-builder invocation and scrolling. Changes to dates or time coordinates require rechecking callers and the [module](../DESIGN.md).
+
+[FoundationIntegrationTests](../../../Tests/CalendarUITests/FoundationIntegrationTests.swift) compares slots and hour marks against Foundation date sequences across 30/60-minute clock changes. It checks placement of standard RecurrenceRule dates and closed-range end boundaries. [NativeRenderingTests](../../../Tests/CalendarUITests/NativeRenderingTests.swift) mounts events expanded by Foundation and verifies event/placeholder selection.

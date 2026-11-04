@@ -64,6 +64,29 @@ import Testing
         #expect(!observation.placeholders.contains(eight))
     }
 
+    @Test(.timeLimit(.minutes(1)))
+    func rendersEventsExpandedByFoundationRecurrenceRule() async throws {
+        let observation = RenderObservations()
+        let calendar = TestDates.calendar()
+        let seed = TestDates.date(2026, 11, 3, 9)
+        let rule = Calendar.RecurrenceRule(calendar: calendar, frequency: .daily, end: .afterOccurrences(3))
+        let events = rule.recurrences(of: seed).enumerated().map { index, occurrence in
+            TestEvent(id: "occurrence-\(index)", startDate: occurrence, endDate: occurrence.addingTimeInterval(3600))
+        }
+        let view = TimeCalendar(TestDates.date(), data: events, id: \.id, in: 8...11,
+                                minuteInterval: 60, timeZone: calendar.timeZone) { _, event in
+            Color.blue.onAppear { observation.events.insert(event.id) }
+        }.emptySlots { date in
+            Color.clear.onAppear { observation.placeholders.insert(date) }
+        }
+        let window = host(view)
+        defer { window.close() }
+        let emptySlot = TestDates.date(2026, 11, 4, 8)
+        try await waitUntil { observation.events.contains("occurrence-1") && observation.placeholders.contains(emptySlot) }
+        #expect(observation.events == ["occurrence-1"])
+        #expect(!observation.placeholders.contains(TestDates.date(2026, 11, 4, 9)))
+    }
+
     @MainActor final class Selection: ObservableObject {
         @Published var date = TestDates.date()
     }
