@@ -2,6 +2,13 @@ import Testing
 @testable import CalendarUI
 
 struct TimeCalendarTests {
+    @Test func currentTimeHandRequiresBothVisibilityConditions() {
+        #expect(!currentTimeHandIsVisible(false, false))
+        #expect(!currentTimeHandIsVisible(false, true))
+        #expect(!currentTimeHandIsVisible(true, false))
+        #expect(currentTimeHandIsVisible(true, true))
+    }
+
     @Test func singleSlotIncludesFirstAndLastBoundaries() {
         let calendar = TestDates.calendar()
         let axis = TimeAxis(date: TestDates.date(), range: 8...9, minuteInterval: 1440, calendar: calendar)

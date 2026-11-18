@@ -50,7 +50,7 @@ where Data: RandomAccessCollection, ID: Hashable, Data.Element: PeriodRepresenta
                     .background { TimelineBackground(axis: axis, insets: insets) }
                     .overlay(alignment: .topLeading) {
                         TimelineView(.periodic(from: .now, by: 60)) { context in
-                            if axis.period.start <= context.date && context.date < axis.period.end {
+                            if currentTimeHandIsVisible(axis.period.start <= context.date, context.date < axis.period.end) {
                                 let y = insets.top + axis.offset(for: context.date, height: height)
                                 CurrentTimeHand(context.date.formatted(Date.FormatStyle(date: .omitted, time: .shortened,
                                                                                        calendar: calendar, timeZone: calendar.timeZone)), insets: insets)

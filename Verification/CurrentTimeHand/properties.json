@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "properties": [
+    {
+      "name": "visibleWithinHalfOpenPeriod",
+      "entry": "currentTimeHandIsVisible",
+      "inputViews": [
+        "boolean",
+        "boolean"
+      ],
+      "resultView": "boolean",
+      "requires": "true",
+      "ensures": "result == (arg0 && arg1)"
+    }
+  ]
+}
